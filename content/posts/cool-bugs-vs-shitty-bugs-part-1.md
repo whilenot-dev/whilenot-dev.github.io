@@ -4,7 +4,7 @@ date = "2022-04-02T14:29:10+02:00"
 author = "Florian Gutzwiller"
 authorTwitter = "" #do not include @
 cover = ""
-tags = ["frontend-engineering", "react"]
+tags = ["frontend", "react", "video streaming", "mjpeg", "observability"]
 keywords = ["", ""]
 description = "Steaming video via Motion JPEG and counting established TCP sockets"
 showFullContent = false
@@ -22,17 +22,15 @@ So let's step through it together and let me start by outlining the system of my
 
 ## Describing the system
 
-The system, as currently present in a product of my client, contains among other services a statically served SPA (written with _react_) and a video stream server (written with _ROS_ in _C++_/_Python_).
+The system, as currently present in a product of my client, contains among other services a statically served SPA (written with [_react_](https://reactjs.org/)) and a video stream server (written with [_ROS_](https://www.ros.org/) in _C++_/_Python_).
 
-The stream server offers its data to the SPA in the Motion JPEG (_MJPEG_) format.
+The stream server offers its data to the SPA in the [Motion JPEG (_MJPEG_)](https://en.wikipedia.org/wiki/Motion_JPEG) format. MJPEG is an rather archaic approach, but still does its job well enough and, among other things, hides all video interaction from the UI.
 
 In the shipped product both servers run on different hosts, but for this post let's assume the SPA is statically served via `:8000` and the MJPEG server is serving its video stream via `:8001`, both on the same host `0.0.0.0`.
 
 ![system_overview.png](/system_overview.png)
 
-The users of this product are able to access the SPA via a Chromium-based browser where they can see the video stream in the center of the page.
-
-Apparently the system didn't work as expected...
+The users of this product are able to access the SPA via a Chromium-based browser and can then see the video stream in the center of the page. A reponsive behavior is implemented as well, but apparently the system didn't work as expected...
 
 ## A bug in ToDo
 
@@ -40,28 +38,26 @@ At the beginning of the week I found a new bug-ticket and its description contai
 
 > By changing the size of the visible video stream in the UI more than 5 times times, eg. by resizing the browser window, the video stream gets lost and the image just shows a blank background.
 
-With the description being elaborate enough, let me try to reproduce it!
-
-So I start up the two affected servers:
+With the description being elaborate enough, I started up the two affected servers:
 
 - the one serving the _react_ SPA
 - and the one MJPEG stream server
 
-...and assume that the video server gets exhausted. Its logs contained entries confirming this assumption:
+...and assumed that the video server got exhausted. I could imediately confirming my assumption as its logs contained entries like the following:
 
 ```txt
 [mjpeg_server] WARN: to many open streams (6/5)
 ```
 
-By doing the resizing with the _DevTools_ on the sidebar of the browser window, and by having the network tab open with the filter set to `Img` (assuming _Brave_), I can observe that there are still data pushed from the MJPEG server, even though the stream got presumably "lost".
+By doing the resizing with the _DevTools_ on the sidebar of the browser window, and by having the network tab open with the filter set to `Img` (assuming _Brave_), I can observe that there are still data pushed from the MJPEG server, even though the stream got presumably "lost". Even more interesting, **all URIs that were ever used to request a MJPEG stream since session start were still receiving server pushes** that contained streaming data from the server.
 
-Even more interesting, **all URIs that were ever used to request a MJPEG stream** since session start **were still receiving server pushes** that contained streaming data from the server. So it looks like each resize event that alters the URI for a new stream request doesn't properly cleanup the streams that were requested previously. With each new such event the browser would just request another distinct stream from the MJPEG server and stack them up while keeping the older ones alife.
+So it looks like each resize event that alters the URI for a new stream request doesn't properly cleanup the streams that were requested previously. With each new such event the browser would just request another distinct stream from the MJPEG server and stack them up while keeping the older ones alife.
 
 Let's have a look at the source code to get some insights and to compare the observed behavior with the current implementation.
 
 ## Some of the systems current implementation
 
-I just want to outline the concept here before I go on to create an isolated playground.
+I just want to outline the concept here before I go on to create an isolated playground for the reader to try it out themselves.
 
 ### React SPA
 
@@ -104,29 +100,29 @@ export function Stream(props: StreamProps) {
 }
 ```
 
-So depending on the visible size there was a condition that chooses the stream resolution to be either `1080p` or `720p`; adaptive streaming in a manual fashion, presumably to safe some bandwidth and lower the computing resources on the MJPEG server. The aspect ratio appears to be guaranteed by the parent component, which also handles the `resize` event.
+A simple functional component in _TypeScript_ that, depending on the available size, chooses a stream resolution to be either `1080p` or `720p`; adaptive streaming in a manual fashion, presumably to safe some bandwidth and lower the computing resources on the MJPEG server. Its parent component did guarantee the aspect ratio and the handling of the `resize` event accordingly.
 
-But, as I just observed in the reproduction step above, even though the `resize` event causes a correct re-render of the `Stream`-component, the unmounted components were still receiving HTTP pushes. _react_ somehow didn't close the stream in the unmount cycle of the component as I would expect.
+But, as I just observed in the reproduction step above, even though the `resize` event causes a correct re-render of the `Stream`-component, the unmounted components were still receiving HTTP pushes from previously used streams. _react_ somehow didn't close the stream in the unmount cycle of the component as I would expect from this implementation.
 
 ...so, a bug in _react_?
 
 ### MJPEG Server
 
-The MJPEG video stream server is implemented in _C++_ and for proprietary reasons I just want to outline the implemeted behavior here.
+The MJPEG video stream server is implemented in _C++_ and for proprietary reasons I just want to outline the implemeted behavior here with a short description. Later on I'll provide some code, so we can create a MJPEG server the FOSS way.
 
-Internally this server gets its images by subscribing to a [ROS topic](https://www.ros.org/). It receives frames in a certain frequency, waits for a browser client to request a stream and then goes on to create a new MJPEG stream for each unique URI in order to serve it.
+Internally the streaming server gets its images by subscribing to a [_ROS_ Topic](http://wiki.ros.org/Topics). It receives frames in a certain frequency, waits for a browser client to request a stream and then goes on with the encoding of a new MJPEG stream for each unique URI.
 
-The browser client is in charge of some stream options via the query: _resolution_, _framerate_, _quality_ etc. `/?resolution=1920x1080` and `/?resolution=1280x720` will produce two distinct MJPEG video streams with different resolutions, just as we've seen in the _react_ `Stream`-component above. And, like present in the server logs, the maximum number of MJPEG streams is limited to 5 streams for a single server. Each client that requests an identical URI will consume the same MJPEG stream.
+The browser client is in charge of some stream options via the query: _resolution_, _framerate_, _quality_ etc. `/?resolution=1920x1080` and `/?resolution=1280x720` will produce two distinct MJPEG video streams with different resolutions, just as we've seen in the _react_ `Stream`-component above. And, like present in the server logs, the maximum number of MJPEG streams is limited to 5 streams for a single server. Each client that requests a stream with an identical URI will consume the same MJPEG stream.
 
 There are some comments in the source code mentioning:
 
 > Every created stream will be garbage collected after there is no application consuming it anymore and some timeout emitted after its last consumption.
 
-To isolate the problematic MJPEG streaming a bit (and to provide some usable example code for the readers of this post) let me create an environment as vanilla as possible...
+To isolate the problem (and to provide some usable example code for the readers of this post) let me create an environment as vanilla as possible...
 
 ## An isolated environment as playground
 
-For reproducibility purposes I want to provide simplified versions of the two servers mentioned above. I need to create one server that provides an endless MJPEG video stream via HTTP and one that serves a simple SPA in order to consume this MJPEG stream as `src` in an HTML `img` element.
+For reproducibility purposes I want to provide some simplified versions of the two servers mentioned above. I need to create one server that provides an endless MJPEG video stream via HTTP and one that serves a simple SPA in order to request this MJPEG stream via a `src` attribute in an HTML `img` element.
 
 **tl;dr** you can clone the mentioned files [here](https://example.com/).
 
@@ -134,13 +130,13 @@ For reproducibility purposes I want to provide simplified versions of the two se
 
 The following packages are needed to launch the MJPEG server successfully (assuming _Fedora_):
 
-- _netcat_
-- _gstreamer1_
-- _gstreamer1-plugins-good_
+- [_netcat_](https://en.wikipedia.org/wiki/Netcat)
+- [_gstreamer1_](https://gstreamer.freedesktop.org)
+- [_gstreamer1-plugins-good_](https://gstreamer.freedesktop.org)
 
 The way MJPEG is streamed via HTTP is with the [`multipart/x-mixed-replace` MIME type](https://en.wikipedia.org/wiki/MIME#x-mixed-replace). I will cover the _why_'s and _how_'s later on in a section below when I go a bit into detail of the involved specs. But for now, let me just echo an HTTP MJPEG stream to _STDOUT_ first.
 
-I use `gstreamer`'s `gst-launch` cli to create a simple MJPEG media pipeline and, like in the _Netscape_ example in the section below about specs, I prepend this load with some `echo`ing for the `multipart` HTTP-header:
+I use `gstreamer`'s `gst-launch` cli to create a simple MJPEG media pipeline and, like in the _Netscape_ example in the section below about specs, I prepend this load with some `echo`ing for the initial `multipart` HTTP-header:
 
 ```bash
 # start-stream.sh
@@ -165,9 +161,9 @@ gst-launch-1.0 -q \
     filesink append=true location=/dev/stdout # the fdsink plugin didn't provide the needed `append` property to include the echoed header
 ```
 
-I'm picking the sweeping ball test video source of gstreamer as my infinite stream here.
+I'm picking the sweeping ball test video source of gstreamer as my infinite stream here. Executing this scripts in the terminal will for the mostly just output some gibberish (JPEG binary data), but you can see that the HTTP header are there as well.
 
-With a proper terminal output ready I make use of `netcat` (`nc`) in listen mode to provide this output as an actual HTTP response from an server:
+Now with a proper terminal output ready I make use of `netcat` (`nc`) in listen mode to provide this output as an actual HTTP response from an server:
 
 ```bash
 # serve.sh
@@ -199,6 +195,8 @@ $ ./serve.sh
 
 ![playground_mjpeg.png](/playground_mjpeg.png)
 
+Now to the SPA...
+
 ### A simple vanilla SPA
 
 For the SPA I also want to stay vanilla and try to work without any 3rd party library involvement (eg. _react_):
@@ -226,6 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function main() {
+  // just a single mount-/unmount-cycle
   addStream();
   window.setTimeout(removeStream, 10000);
 }
@@ -290,6 +289,8 @@ $ ./serve.sh
 
 ![playground_spa.png](/playground_spa.png)
 
+Let's do some observations together!
+
 ## Observability
 
 With the playground in place, let me observe the behavior of the loading MJPEG stream more closely.
@@ -306,7 +307,7 @@ On _Brave_:
 - the logs contain a single entry: `images loaded: 1`
 - the stream keeps loading in the background after the HTML `img` element has been removed from the DOM!
 
-![playground.mp4](/playground.mp4)
+![playground.gif](/playground.gif)
 
 On _Firefox_ (just for completeness):
 
@@ -318,26 +319,42 @@ My client just puts its focus on Chromium based browsers with their product, but
 
 Let us observe the established TCP sockets for the MJPEG server on OS level.
 
-### Making established TCP sockets countable
+### Making established TCP sockets visible
 
 After feeling enlighted and motivated by _Brendan Gregg_'s books _BPF Performance Tools: Linux System and Application Observability_ and _Systems Performance: Enterprise and the Cloud_, let me get a list of all the established TCP sockets from the browser (source) to the MJPEG server (destination).
 
-With the servers running on my machine (see scripts above) I can observe the established sockets for my destination with [ss](https://www.man7.org/linux/man-pages/man8/ss.8.html).
+With the servers running on my machine (with the scripts above) I can observe the established sockets for my destination with [ss](https://www.man7.org/linux/man-pages/man8/ss.8.html).
 
 ```bash
 $ ss -HOna4t state established '( dst = 127.0.0.1:8001 )'
 ```
 
-To enable me to observe any changes more easily, I can [watch](https://www.man7.org/linux/man-pages/man1/watch.1.html) the output of the command also continuously as frequent as every 100ms.
+```txt
+0                   0                                  127.0.0.1:59590                             127.0.0.1:8001
+```
+
+To observe any changes more easily I can [watch](https://www.man7.org/linux/man-pages/man1/watch.1.html) the output of the command also continuously as frequent as every 100ms.
 
 ```bash
 $ watch -n 0.1 "ss -HOna4t state established '( dst = 127.0.0.1:8001 )'"
+```
+
+```txt
+Every 0.1s: ss -HOna4t state established '( dst = 127.0.0.1:8001 )'   dell-precision-5560.localdomain: Fri Apr 1 21:28:12 2022
+
+0      0      127.0.0.1:59590 127.0.0.1:8001
 ```
 
 If you don't have `ss` available on your system (maybe on MacOS?), [netstat](https://man7.org/linux/man-pages/man8/netstat.8.html) and [awk](https://man7.org/linux/man-pages/man1/awk.1p.html) provide similar capabilities.
 
 ```bash
 $ watch -n 0.1 "netstat -4nt | awk '"'{ if ($5 == "127.0.0.1:8001" && $6 == "ESTABLISHED") print $0 }'"'"
+```
+
+```txt
+Every 0.1s: netstat -4nt | awk '{ if ($5 == "127.0.0.1:8001" && $...  dell-precision-5560.localdomain: Fri Apr 1 21:29:28 2022
+
+tcp        0	  0 127.0.0.1:59592         127.0.0.1:8001          ESTABLISHED
 ```
 
 If I'm only interested in the **number** of established sockets, I could narrow it down even further to a single numeric value. With one line per socket I could just count the number of lines.
@@ -352,9 +369,9 @@ $ watch -n 0.1 "ss -HOna4t state established '( dst = 127.0.0.1:8001 )' | wc -l"
 $ watch -n 0.1 "netstat -4nt | awk '"'{ if ($5 == "127.0.0.1:8001" && $6 == "ESTABLISHED") print $0 }'"' | wc -l"
 ```
 
-With one of those scripts running in the terminal I have the visible inidicator ready on OS level in order to see that the established TCP socket doesn't get closed after the HTML `img` element has been removed from the DOM.
+With one of those scripts running in the terminal I have the visible inidicator ready on OS level. I can clearly see that the established TCP socket doesn't get closed after the HTML `img` element has been removed from the DOM.
 
-We knew that one before from looking at the network tab in the _DevTools_, but making it scriptable could give me some idea on how to test this behavior in an browser-independent and automated way. We can't trust the browser to be according to spec all the time (like I'll show below), so why should we trust the entries in the _DevTools_... but back to the bug.
+We knew that one before by deriving it from the network tab in the _DevTools_, but making it scriptable could give us some idea on how to test this behavior in an browser-independent automated way.
 
 Let me have a look at the specs. Maybe this behavior is according to the specs or they could give me another hint at least...
 
@@ -366,7 +383,7 @@ Let's step from lowest to highest level: TCP sockets, MJPEG streaming via HTTP p
 
 Did you ever had a look at the TCP RFC?
 
-What interests me in this case is the section about the different _states_ that a TCP socket can have:
+What interests me in this case is the section about the different [states](https://www.rfc-editor.org/rfc/rfc793#section-3.2) a TCP socket can have:
 
 ```txt
   A connection progresses through a series of states during its
@@ -477,7 +494,7 @@ What interests me in this case is the section about the different _states_ that 
                                Figure 6.
 ```
 
-Data can flow on an _ESTABLISHED_ state, as you could already see, as I put it for an additional filter into our observability one-liners.
+Data can flow on an _ESTABLISHED_ state, that's why I added an additional filter to the observability one-liners.
 
 So my TCP socket stays _ESTABLISHED_ after the HTML element has been removed from the DOM, the `img` with the TCP remote set as `src` attribute. But why doesn't the browsers close the socket to the MJPEG server?
 
@@ -488,13 +505,11 @@ I could find that information spread out on multiple sources.
 
 [Wikipedia](https://en.wikipedia.org/wiki/Motion_JPEG#Video_streaming) has a nice overview:
 
-> In response to a GET request for a MJPEG file or stream, the server streams the sequence of JPEG frames over HTTP. A special mime-type content type multipart/x-mixed-replace;boundary=<boundary-name> informs the client to expect several parts (frames) as an answer delimited by <boundary-name>. This boundary name is expressly disclosed within the MIME-type declaration itself. The TCP connection is not closed as long as the client wants to receive new frames and the server wants to provide new frames. Two basic implementations of a M-JPEG streaming server are cambozola and MJPG-Streamer. The more robust ffmpeg-server also provides M-JPEG streaming support.
+> In response to a GET request for a MJPEG file or stream, the server streams the sequence of JPEG frames over HTTP. A special mime-type content type multipart/x-mixed-replace;boundary=\<boundary-name\> informs the client to expect several parts (frames) as an answer delimited by \<boundary-name\>. This boundary name is expressly disclosed within the MIME-type declaration itself. The TCP connection is not closed as long as the client wants to receive new frames and the server wants to provide new frames. [...]
 >
 > Native web browser support includes: Safari, Google Chrome, Microsoft Edge[5] and Firefox.[6]
 
-[`combozola`](https://github.com/kscape/cambozola) and [`MJPG-Streamer`](https://sourceforge.net/projects/mjpg-streamer/) seemed rather complex for my testing purposes, so I just created above script with [`gstreamer` plugins](https://gstreamer.freedesktop.org/documentation/multipart/multipartmux.html?gi-language=c#multipartmux).
-
-The specific MIME type that enables the server to push a stream to the client originates from [this post on Server Pushes from Netscape](https://web.archive.org/web/19981203153836/http://fishcam.netscape.com/assist/net_sites/pushpull.html) back in the day:
+The specific MIME type in the content type of the HTTP response (that enables the server to push a stream to the client) originates from [this post on Server Pushes](https://web.archive.org/web/19981203153836/http://fishcam.netscape.com/assist/net_sites/pushpull.html) from _Netscape_ back in the day:
 
 > For server push we use a variant of "multipart/mixed" called "multipart/x-mixed-replace". The "x-" indicates this type is experimental. The "replace" indicates that each new data block will cause the previous data block to be replaced -- that is, new data will be displayed instead of (not in addition to) old data.
 >
@@ -531,26 +546,26 @@ Data for the second and last object.
 
 ```bash
 #!/bin/sh
-
 echo "HTTP/1.0 200"
 echo "Content-type: multipart/x-mixed-replace;boundary=---ThisRandomString---"
 echo ""
 echo "---ThisRandomString---"
-
-while true; do
-    echo "Content-type: text/html"
-    echo ""
-    echo "<h2>Processes on this machine updated every 5 seconds</h2>"
-    echo "time: "; date
-    echo "<p>\n<plaintext>"; ps -el
-    echo "</plaintext>\n</p>"
-    echo "---ThisRandomString---"
-
-    sleep 5
+while true
+do
+echo "Content-type: text/html"
+echo ""
+echo "<h2>Processes on this machine updated every 5 seconds</h2>"
+echo "time: "
+date
+echo "<p>"
+echo "<plaintext>"
+ps -el
+echo "---ThisRandomString---"
+sleep 5
 done
 ```
 
-Futher, this is an excerpt of the HTML specs by the WHATWG on [multipart/x-mixed-replace](https://html.spec.whatwg.org/multipage/browsing-the-web.html#read-multipart-x-mixed-replace):
+Following is an excerpt from the HTML specs by the WHATWG on [multipart/x-mixed-replace](https://html.spec.whatwg.org/multipage/browsing-the-web.html#read-multipart-x-mixed-replace):
 
 > For the purposes of algorithms processing these body parts as if they were complete stand-alone resources, the user agent must act as if there were no more bytes for those resources whenever the boundary following the body part is reached.
 >
@@ -558,7 +573,7 @@ Futher, this is an excerpt of the HTML specs by the WHATWG on [multipart/x-mixed
 
 Can you notice the bit about the load events: "_load events [...] do fire for each body part loaded._"? It seems that each received MJPEG frame should emit the `load` event... _Brave_ only emits the one for the first frame, but _Firefox_ seemingly does!
 
-Here are the relevant bits of the "[process a navigate response](https://html.spec.whatwg.org/multipage/browsing-the-web.html#process-a-navigate-response)"-section from the HTML spec by the WHATWG:
+Here are the relevant bits of the "[process a navigate response](https://html.spec.whatwg.org/multipage/browsing-the-web.html#process-a-navigate-response)"-section from the HTML spec:
 
 > To process a navigate response, given a string navigationType, a boolean allowedToDownload, a boolean hasTransientActivation, and a navigation params navigationParams:
 >
@@ -603,7 +618,7 @@ Here are the relevant bits of the "[process a navigate response](https://html.sp
 >
 >     [...]
 
-Oki, so much for MJPEG streaming. Let's have a look at the spec for the HTML `img` element.
+Oki, so much for MJPEG streaming. The server is in charge of the framerate and both (server and client) can termination the connection. Let's have a look at the spec for the HTML `img` element.
 
 ### HTMLImageElement
 
@@ -625,11 +640,11 @@ The part about _"[...] is also true if the image has no src value [...]"_ lead m
 > - The image element has previously determined that the image is fully available and ready for use.
 > - The image is "broken;" that is, the image failed to load due to an error or because image loading is disabled.
 
-Let me just try that!
+So let me just try to remove the `src` attribute in the unmount cycle of the component!
 
 ## I hope we'll learn something new here...
 
-So right before the call to `img.remove()` in our vanilla SPA, I include a call to remove the `src` attribute.
+So right before the call to `img.remove()` in the vanilla SPA, I include a call to remove the `src` attribute.
 
 ```javascript
 // ...same as above
@@ -648,7 +663,7 @@ function removeImage() {
 }
 ```
 
-Now, when I observe the established sockets with our little hacky watcher again:
+Now, when I observe the established sockets with the little hacky watcher again:
 
 ```sh
 $ watch -n 0.1 "ss -HOna4t state established '( dst = 127.0.0.1:8001 )'"
@@ -658,7 +673,7 @@ $ watch -n 0.1 "ss -HOna4t state established '( dst = 127.0.0.1:8001 )'"
 
 Wow! What was missing is a surprising client-side `img.removeAttribute("src")` right before the call to `img.remove()`, otherwise the socket will stay open and continue to receive pushes from the MJPEG server.
 
-So in the _react_ SPA of my client I archieve this with the following changes:
+So in the _react_ SPA of my client I archieve the same behavior by using an effect hook. That should remove the attribute in the unmount cycle:
 
 ```typescript
 import * as React from "react";
@@ -701,25 +716,24 @@ export function Stream(props: StreamProps) {
 }
 ```
 
-...and just like that I only stream the data for the video that is also present in the DOM and the MJPEG server can properly garbage collect its unused streams. Going even further, now that the MJPEG server can garbage collect all the unused streams, I included some additional conditions to handle even smaller resolutions than `720p`.
+...and just like that I only stream the data for the video that is also present in the DOM and the MJPEG server can properly garbage collect its unused streams!
+
+Going even further, now that the MJPEG server can garbage collect all the unused streams, I included some additional conditions to handle even smaller resolutions than `720p` and safe some more resources.
 
 ## Conclusion
 
-We reproduced the bug properly, elaborated the process on how to isolate the problem and got to know some useful scripts that provide observability for us. I think it's nice to see that modern frontend engineering involves quite some knowledge about a working system, the complexity of browsers and sometimes a thorough read through specs. What's missing might be a look at the Chromium source code.
+In this post I reproduced the bug properly, elaborated the process on how to isolate the problem and got to know create useful scripts that provide observability on established TCP sockets. I think it's nice to see that modern frontend engineering involves quite some knowledge about a working system, the complexity of browsers and sometimes a thorough read through specs and some historical documents. What's missing might be a look into the Chromium source code.
 
-...and what was so cool about the bug?
+There seems to be an interesting quirk with an `Image` being loaded via `multipart`-HTTP-pushes in an responsive implementation. In the end I just assume that an `Image` doesn't get garbage collected by the browser engine, as it is expected to `complete` the loading process first. Maybe this clashes with `multipart`-HTTP-pushes, especially after the `load` event got emitted - and that emit happens, in contrast to spec, only once (on _Brave_!). Regarding responsive images, I did also try out the [`srcset` attribute](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/srcset) for a responsive behavior without any scripting, but that one had even more quirks and I might cover this in a followup post. I wonder if there are other HTML elements that suffer from such surprises like the `HTMLImageElement`?
 
-A cool bug is so complex and intertwined that it becomes hard to avoid during development. It's deeply hidden in some spec, maybe even just an implicit behavior and can't be easily looked up in any documentation of a library. I could have easily created such a bug myself and solving such a cool bug makes me feel like I could grow as a software engineer simply by fixing it.
+...and, what was so cool about the bug?
 
-In the end I just assume that a loading `Image`, while removed from the DOM, just doesn't get garbage collected by the browser engine. Maybe this clashes with `multipart`-HTTP-pushes, especially after the `load` event got emitted and that in contrast to the spec only once (on _Brave_!). I wonder if there are other HTML elements that suffer from such surprises like the `HTMLImageElement`?
-
-Even after this long journey there are still open questions and unfortunately, cool bugs are rare!
+A cool bug is so complex that it becomes hard to avoid during development, even after making every decision reasonable well. Such a bug is deeply hidden in some spec, maybe even just an implicit behavior and can't be easily looked up in any documentation of a library. I could have easily created such a bug myself and solving such a bug makes me feel like I could grow as a software engineer simply by fixing it. Unfortunately, cool bugs are rare!
 
 Here's a quick list of all the awesome tools that were touched in this journey:
 
 - `netcat` (`nc`)
 - `gstreamer` (`gst-launch`)
 - `ss` (or `netstat` / `awk` for MacOS)
-- `watch`
 
 Thank you for having a look and stepping through it with me!
