@@ -1,6 +1,6 @@
 +++
 title = "Cool Bugs VS Shitty Bugs, Part 1: Cool Bugs"
-date = "2022-04-02T14:29:10+02:00"
+date = "2022-04-10T14:29:10+02:00"
 author = "Florian Gutzwiller"
 authorTwitter = "" #do not include @
 cover = ""
