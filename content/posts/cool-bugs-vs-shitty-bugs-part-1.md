@@ -124,7 +124,7 @@ To isolate the problem (and to provide some usable example code for the readers 
 
 For reproducibility purposes I want to provide some simplified versions of the two servers mentioned above. I need to create one server that provides an endless MJPEG video stream via HTTP and one that serves a simple SPA in order to request this MJPEG stream via a `src` attribute in an HTML `img` element.
 
-**tl;dr** you can clone the mentioned files [here](https://example.com/).
+**tl;dr** you can clone the mentioned files [here](https://github.com/whilenot-dev/cool-bugs-vs-shitty-bugs-part-1).
 
 ### A simple MJPEG server
 
