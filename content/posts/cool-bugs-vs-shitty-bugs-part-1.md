@@ -157,9 +157,9 @@ echo ""
 
 # multipart body parts
 gst-launch-1.0 -q \
-    videotestsrc pattern=ball motion=sweep ! \
+    videotestsrc is-live=true pattern=ball motion=sweep ! \
     videorate rate=0.04 ! \
-    video/x-raw,width=640,height=480 ! \
+    video/x-raw,width=640,height=480,framerate=60/1 ! \
     jpegenc quality=5 ! \
     multipartmux boundary="${BOUNDARY}" ! \
     filesink append=true location=/dev/stdout # the fdsink plugin didn't provide the needed `append` property to include the echoed header
