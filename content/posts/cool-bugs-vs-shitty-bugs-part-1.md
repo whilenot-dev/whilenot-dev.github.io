@@ -496,7 +496,7 @@ What interests me in this case is the section about the different [states](https
 
 Data can flow on an _ESTABLISHED_ state, that's why I added an additional filter to the observability one-liners.
 
-So my TCP socket stays _ESTABLISHED_ after the HTML element has been removed from the DOM, the `img` with the TCP remote set as `src` attribute. But why doesn't the browsers close the socket to the MJPEG server?
+So HTML `img` element, with the TCP remote set as `src` attribute, stays an _ESTABLISHED_ TCP socket, even after the HTML element has been removed from the DOM. But why doesn't the browsers close the socket to the MJPEG server?
 
 ### Video streaming via Motion JPEG
 
