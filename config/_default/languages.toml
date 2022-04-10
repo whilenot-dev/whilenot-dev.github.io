@@ -1,6 +1,6 @@
 [en]
   languageName = "English"
-  title = "Blog"
+  title = "wh!le / blog"
   subtitle = "An exploration in the software space"
   owner = ""
   keywords = ""
@@ -14,15 +14,15 @@
   missingBackButtonLabel = "Back to home page"
 
   [en.params.logo]
-    logoText = "Blog"
+    logoText = "wh!le / blog"
     logoHomeLink = "/"
 
-  [en.menu]
-    [[en.menu.main]]
-      identifier = "about"
-      name = "About"
-      url = "/about"
-    [[en.menu.main]]
-      identifier = "showcase"
-      name = "Showcase"
-      url = "/showcase"
+  # [en.menu]
+  #   [[en.menu.main]]
+  #     identifier = "about"
+  #     name = "About"
+  #     url = "/about"
+  #   [[en.menu.main]]
+  #     identifier = "showcase"
+  #     name = "Showcase"
+  #     url = "/showcase"
