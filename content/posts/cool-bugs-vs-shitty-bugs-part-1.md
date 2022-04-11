@@ -659,9 +659,9 @@ Now, when I observe the established sockets with the little hacky watcher again:
 $ watch -n 0.1 "ss -HOna4t state established '( dst = 127.0.0.1:8001 )'"
 ```
 
-![playground_fix.gif](/images/cool-bugs-vs-shitty-bugs-part-1/playground_fix.gif "Fix in playground")
+...I can see that the established TCP socket gets closed properly.
 
-...I can see that the established TCP socket gets properly closed.
+![playground_fix.gif](/images/cool-bugs-vs-shitty-bugs-part-1/playground_fix.gif "Fix in playground")
 
 Wow! What was missing is a surprising client-side `img.removeAttribute("src")` right before the call to `img.remove()`, otherwise the socket will stay open and continue to receive pushes from the MJPEG server.
 
