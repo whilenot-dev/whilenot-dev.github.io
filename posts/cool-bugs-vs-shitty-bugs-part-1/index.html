@@ -120,7 +120,9 @@ document.<span style=color:#a6e22e>addEventListener</span>(<span style=color:#e6
 
 <span style=color:#75715e>#!/bin/bash</span>
 
-python -m http.server <span style=color:#ae81ff>8000</span>
+DIR<span style=color:#f92672>=</span><span style=color:#66d9ef>$(</span> dirname <span style=color:#e6db74>&#34;</span><span style=color:#66d9ef>$(</span> realpath <span style=color:#e6db74>&#34;</span>$0<span style=color:#e6db74>&#34;</span> <span style=color:#66d9ef>)</span><span style=color:#e6db74>&#34;</span> <span style=color:#66d9ef>)</span>
+
+python -m http.server --directory <span style=color:#e6db74>&#34;</span><span style=color:#e6db74>${</span>DIR<span style=color:#e6db74>}</span><span style=color:#e6db74>&#34;</span> <span style=color:#ae81ff>8000</span>
 </code></pre></div><p>&mldr;so with a directory structure like the following:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>.
 ├── index.html
 ├── main.js
