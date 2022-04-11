@@ -256,7 +256,9 @@ I can serve those files with the static file server of my choice:
 
 #!/bin/bash
 
-python -m http.server 8000
+DIR=$( dirname "$( realpath "$0" )" )
+
+python -m http.server --directory "${DIR}" 8000
 ```
 
 ...so with a directory structure like the following:
