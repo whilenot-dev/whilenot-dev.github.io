@@ -16,7 +16,7 @@ hideComments = false
 
 Recently I had to debug a problem in an SPA regarding Motion JPEG streams for one of my clients. I found this journey so interesting that I wanted to share it as my first blog post.
 
-The post should give the reader an introduction on what it means nowadays to do frontend engineering. What follows is a post that touches on _MJPEG streams_, _HTTP pushes_, _TCP sockets_ and _their observability_. What I assumed to be a bug in either the clients application code or even the _react_ library, just turned out to surprise me and I think it could surprise others as well.
+The post should give the reader an introduction on what it means to do frontend engineering nowadays. What follows is a post that touches on _MJPEG streams_, _HTTP pushes_, _TCP sockets_ and _their observability_. What I assumed to be a bug in either the clients application code or even the _react_ library, just turned out to surprise me and I think it could surprise others as well.
 
 So let's step through it together and let me start by outlining the system of my client.
 
