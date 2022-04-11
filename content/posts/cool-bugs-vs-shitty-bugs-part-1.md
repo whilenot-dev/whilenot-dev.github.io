@@ -51,7 +51,7 @@ With the description being elaborate enough, I started up the two affected serve
 
 By resizing the browser window with the _DevTools_ on the sidebar and by having the network tab open (with the filter set to `Img`, assuming _Brave_), I can observe that there are still data pushed from the MJPEG server; even though the stream got presumably "lost". Even more interesting, **all URIs that were ever used to request a MJPEG stream since session start were still receiving server pushes** with streaming data from the server.
 
-So it looks like each resize event that alters the URI for a new stream request doesn't properly cleanup the streams that were requested previously. With each new such event the browser would just request another distinct stream from the MJPEG server and stack them up while keeping the older ones open.
+So it looks like each resize event that alters the URI for a new stream request doesn't properly cleanup the streams that were previously requested. With each new such event the browser would just request another distinct stream from the MJPEG server and stack them up while keeping the older ones open.
 
 Let's have a look at the source code to get some insights and to compare the observed behavior with the current implementation.
 
