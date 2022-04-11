@@ -1,10 +1,10 @@
 [en]
   languageName = "English"
   title = "wh!le / blog"
-  subtitle = "An exploration in the software space"
+  subtitle = "An exploration into the software space"
   owner = ""
   keywords = ""
-  copyright = ""
+  copyright = "@ Florian Gutzwiller"
   menuMore = "Show more"
   readMore = "Read more"
   readOtherPosts = "Read other posts"
