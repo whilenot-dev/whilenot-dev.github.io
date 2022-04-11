@@ -1,0 +1,28 @@
+[en]
+  languageName = "English"
+  title = "wh!le / blog"
+  subtitle = "An exploration in the software space"
+  owner = ""
+  keywords = ""
+  copyright = ""
+  menuMore = "Show more"
+  readMore = "Read more"
+  readOtherPosts = "Read other posts"
+  newerPosts = "Newer posts"
+  olderPosts = "Older posts"
+  missingContentMessage = "Page not found..."
+  missingBackButtonLabel = "Back to home page"
+
+  [en.params.logo]
+    logoText = "wh!le / blog"
+    logoHomeLink = "/"
+
+  # [en.menu]
+  #   [[en.menu.main]]
+  #     identifier = "about"
+  #     name = "About"
+  #     url = "/about"
+  #   [[en.menu.main]]
+  #     identifier = "showcase"
+  #     name = "Showcase"
+  #     url = "/showcase"
