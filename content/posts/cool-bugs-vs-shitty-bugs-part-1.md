@@ -28,7 +28,7 @@ The stream server offers its data to the SPA in the [Motion JPEG (_MJPEG_)](http
 
 In the shipped product both servers run on different hosts, but for this post let's assume the SPA is statically served via `:8000` and the MJPEG server is serving its video stream via `:8001`, both on the same host `0.0.0.0`.
 
-![system_overview.png](/system_overview.png)
+![system_overview.png](/images/cool-bugs-vs-shitty-bugs-part-1/system_overview.png "System overview")
 
 The users of this product are able to access the SPA via a Chromium-based browser and can then see the video stream in the center of the page. A reponsive behavior is implemented as well, but apparently the system didn't work as expected...
 
@@ -193,7 +193,7 @@ $ ./serve.sh
 
 ...to listen for HTTP requests on `0.0.0.0:8001` and respond with a MJPEG video stream.
 
-![playground_mjpeg.png](/playground_mjpeg.png)
+![playground_mjpeg.png](/images/cool-bugs-vs-shitty-bugs-part-1/playground_mjpeg.png "Playground of MJPEG Stream")
 
 Now to the SPA...
 
@@ -287,7 +287,7 @@ $ ./serve.sh
 
 ...and can consum the MJPEG stream with my vanilla SPA on `0.0.0.0:8000`.
 
-![playground_spa.png](/playground_spa.png)
+![playground_spa.png](/images/cool-bugs-vs-shitty-bugs-part-1/playground_spa.png "Playground of SPA")
 
 Let's do some observations together!
 
@@ -307,7 +307,7 @@ On _Brave_:
 - the logs contain a single entry: `images loaded: 1`
 - the stream keeps loading in the background after the HTML `img` element has been removed from the DOM!
 
-![playground.gif](/playground.gif)
+![playground.gif](/images/cool-bugs-vs-shitty-bugs-part-1/playground.gif "Playground animated")
 
 On _Firefox_ (just for completeness):
 
