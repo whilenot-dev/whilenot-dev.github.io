@@ -232,7 +232,7 @@ function addStream() {
 
   img.setAttribute("id", "stream");
   img.setAttribute("alt", "loading stream...");
-  img.setAttribute("src", "http://0.0.0.0:8001/"); // ref to the netcat MJPEG server above
+  img.setAttribute("src", "//0.0.0.0:8001/"); // ref to the netcat MJPEG server above
   img.setAttribute("height", "480");
   img.setAttribute("width", "640");
 
