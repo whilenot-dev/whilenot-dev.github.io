@@ -1,4 +1,4 @@
-baseURL = 'https://blog.whilenot.dev'
+baseURL = 'https://blog.whilenot.dev/'
 languageCode = 'en-us'
 title = 'Blog'
 theme = 'archie'
