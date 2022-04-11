@@ -1,1 +1,3 @@
-# whilenot-dev.github.io
+# blog.whilenot.dev
+
+My personal blog.
