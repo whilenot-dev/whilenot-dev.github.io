@@ -100,7 +100,7 @@ export function Stream(props: StreamProps) {
 }
 ```
 
-A simple functional component in _TypeScript_ that, depending on the available size, chooses a stream resolution to be either `1080p` or `720p`; adaptive streaming in a manual fashion, presumably to safe some bandwidth and lower the computing resources on the MJPEG server. Its parent component did guarantee the aspect ratio and a proper handling of the `resize` event accordingly.
+A simple functional component in _TypeScript_ that, depending on the available size, chooses a stream resolution to be either `1080p` or `720p`; adaptive streaming in a manual fashion, presumably to safe some bandwidth and lower the computing resources on the MJPEG server. Its parent component did guarantee the aspect ratio and a proper handling of the `resize` event.
 
 But, as I just observed in the reproduction step above, even though the `resize` event causes a correct re-render of the `Stream`-component, the unmounted components were still receiving HTTP pushes from previously used streams. _react_ somehow didn't close the stream in the unmount cycle of the component, as I would expect from this implementation... so, a bug in _react_?
 
