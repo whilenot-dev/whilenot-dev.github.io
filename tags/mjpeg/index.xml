@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>mjpeg on wh!le / blog</title><link>https://blog.whilenot.dev/tags/mjpeg/</link><description>Recent content in mjpeg on wh!le / blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sun, 10 Apr 2022 14:29:10 +0200</lastBuildDate><atom:link href="https://blog.whilenot.dev/tags/mjpeg/index.xml" rel="self" type="application/rss+xml"/><item><title>Cool Bugs VS Shitty Bugs, Part 1: Cool Bugs</title><link>https://blog.whilenot.dev/posts/cool-bugs-vs-shitty-bugs-part-1/</link><pubDate>Sun, 10 Apr 2022 14:29:10 +0200</pubDate><guid>https://blog.whilenot.dev/posts/cool-bugs-vs-shitty-bugs-part-1/</guid><description>Steaming video via Motion JPEG and counting established TCP sockets Recently I had to debug a problem in an SPA regarding Motion JPEG streams for one of my clients. I found this journey so interesting that I wanted to share it as my first blog post.
-The post should give the reader an intro on what it means nowadays to do frontend engineering. What follows is a post that touches on MJPEG streams, HTTP pushes, TCP sockets and their observability.</description><content>&lt;h1 id="steaming-video-via-motion-jpeg-and-counting-established-tcp-sockets">Steaming video via Motion JPEG and counting established TCP sockets&lt;/h1>
+The post should give the reader an introduction on what it means nowadays to do frontend engineering. What follows is a post that touches on MJPEG streams, HTTP pushes, TCP sockets and their observability.</description><content>&lt;h1 id="steaming-video-via-motion-jpeg-and-counting-established-tcp-sockets">Steaming video via Motion JPEG and counting established TCP sockets&lt;/h1>
 &lt;p>Recently I had to debug a problem in an SPA regarding Motion JPEG streams for one of my clients. I found this journey so interesting that I wanted to share it as my first blog post.&lt;/p>
-&lt;p>The post should give the reader an intro on what it means nowadays to do frontend engineering. What follows is a post that touches on &lt;em>MJPEG streams&lt;/em>, &lt;em>HTTP pushes&lt;/em>, &lt;em>TCP sockets&lt;/em> and &lt;em>their observability&lt;/em>. What I assumed to be a bug in either application code or even the &lt;em>react&lt;/em> library, just turned out to surprise me, and I think it could surprise others as well.&lt;/p>
+&lt;p>The post should give the reader an introduction on what it means nowadays to do frontend engineering. What follows is a post that touches on &lt;em>MJPEG streams&lt;/em>, &lt;em>HTTP pushes&lt;/em>, &lt;em>TCP sockets&lt;/em> and &lt;em>their observability&lt;/em>. What I assumed to be a bug in either the clients application code or even the &lt;em>react&lt;/em> library, just turned out to surprise me and I think it could surprise others as well.&lt;/p>
 &lt;p>So let&amp;rsquo;s step through it together and let me start by outlining the system of my client.&lt;/p>
 &lt;h2 id="describing-the-system">Describing the system&lt;/h2>
-&lt;p>The system, as currently present in a product of my client, contains among other services a statically served SPA (written with &lt;a href="https://reactjs.org/">&lt;em>react&lt;/em>&lt;/a>) and a video stream server (written with &lt;a href="https://www.ros.org/">&lt;em>ROS&lt;/em>&lt;/a> in &lt;em>C++&lt;/em>/&lt;em>Python&lt;/em>).&lt;/p>
-&lt;p>The stream server offers its data to the SPA in the &lt;a href="https://en.wikipedia.org/wiki/Motion_JPEG">Motion JPEG (&lt;em>MJPEG&lt;/em>)&lt;/a> format. MJPEG is an rather archaic approach, but still does its job well enough and, among other things, hides all video interaction from the UI.&lt;/p>
+&lt;p>The system of my client contains, among other services, a statically served SPA (written with &lt;a href="https://reactjs.org/">&lt;em>react&lt;/em>&lt;/a>) and a video stream server (written with &lt;a href="https://www.ros.org/">&lt;em>ROS&lt;/em>&lt;/a> in &lt;em>C++&lt;/em>/&lt;em>Python&lt;/em>).&lt;/p>
+&lt;p>The stream server offers its data to the SPA in the &lt;a href="https://en.wikipedia.org/wiki/Motion_JPEG">Motion JPEG (&lt;em>MJPEG&lt;/em>)&lt;/a> format. MJPEG is an rather archaic approach, but still does its job well enough and hides all video interaction from the UI.&lt;/p>
 &lt;p>In the shipped product both servers run on different hosts, but for this post let&amp;rsquo;s assume the SPA is statically served via &lt;code>:8000&lt;/code> and the MJPEG server is serving its video stream via &lt;code>:8001&lt;/code>, both on the same host &lt;code>0.0.0.0&lt;/code>.&lt;/p>
 &lt;p>&lt;img src="https://blog.whilenot.dev/images/cool-bugs-vs-shitty-bugs-part-1/system_overview.png" alt="system_overview.png" title="System overview">&lt;/p>
-&lt;p>The users of this product are able to access the SPA via a Chromium-based browser and can then see the video stream in the center of the page. A reponsive behavior is implemented as well, but apparently the system didn&amp;rsquo;t work as expected&amp;hellip;&lt;/p>
-&lt;h2 id="a-bug-in-todo">A bug in ToDo&lt;/h2>
+&lt;p>The users are able to access the SPA via a Chromium-based browser and can then see the video stream in the center of the page. A responsive behavior is implemented as well, but apparently the system didn&amp;rsquo;t work as expected&amp;hellip;&lt;/p>
+&lt;h2 id="a-bug-in-todo">A bug in Todo&lt;/h2>
 &lt;p>At the beginning of the week I found a new bug-ticket and its description contained something like the following:&lt;/p>
 &lt;blockquote>
 &lt;p>By changing the size of the visible video stream in the UI more than 5 times times, eg. by resizing the browser window, the video stream gets lost and the image just shows a blank background.&lt;/p>
@@ -19,10 +19,10 @@ The post should give the reader an intro on what it means nowadays to do fronten
 &lt;li>the one serving the &lt;em>react&lt;/em> SPA&lt;/li>
 &lt;li>and the one MJPEG stream server&lt;/li>
 &lt;/ul>
-&lt;p>&amp;hellip;and assumed that the video server got exhausted. I could imediately confirming my assumption as its logs contained entries like the following:&lt;/p>
+&lt;p>&amp;hellip;and assumed that the video server got exhausted. I could imediately confirm my assumption as its logs contained entries like the following:&lt;/p>
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-txt" data-lang="txt">[mjpeg_server] WARN: to many open streams (6/5)
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>By doing the resizing with the &lt;em>DevTools&lt;/em> on the sidebar of the browser window, and by having the network tab open with the filter set to &lt;code>Img&lt;/code> (assuming &lt;em>Brave&lt;/em>), I can observe that there are still data pushed from the MJPEG server, even though the stream got presumably &amp;ldquo;lost&amp;rdquo;. Even more interesting, &lt;strong>all URIs that were ever used to request a MJPEG stream since session start were still receiving server pushes&lt;/strong> that contained streaming data from the server.&lt;/p>
-&lt;p>So it looks like each resize event that alters the URI for a new stream request doesn&amp;rsquo;t properly cleanup the streams that were requested previously. With each new such event the browser would just request another distinct stream from the MJPEG server and stack them up while keeping the older ones alife.&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>By resizing the browser window with the &lt;em>DevTools&lt;/em> on the sidebar and by having the network tab open (with the filter set to &lt;code>Img&lt;/code>, assuming &lt;em>Brave&lt;/em>), I can observe that there are still data pushed from the MJPEG server; even though the stream got presumably &amp;ldquo;lost&amp;rdquo;. Even more interesting, &lt;strong>all URIs that were ever used to request a MJPEG stream since session start were still receiving server pushes&lt;/strong> with streaming data from the server.&lt;/p>
+&lt;p>So it looks like each resize event that alters the URI for a new stream request doesn&amp;rsquo;t properly cleanup the streams that were requested previously. With each new such event the browser would just request another distinct stream from the MJPEG server and stack them up while keeping the older ones open.&lt;/p>
 &lt;p>Let&amp;rsquo;s have a look at the source code to get some insights and to compare the observed behavior with the current implementation.&lt;/p>
 &lt;h2 id="some-of-the-systems-current-implementation">Some of the systems current implementation&lt;/h2>
 &lt;p>I just want to outline the concept here before I go on to create an isolated playground for the reader to try it out themselves.&lt;/p>
@@ -58,20 +58,19 @@ The post should give the reader an intro on what it means nowadays to do fronten
 &lt;span style="color:#66d9ef">const&lt;/span> &lt;span style="color:#a6e22e">src&lt;/span> &lt;span style="color:#f92672">=&lt;/span> &lt;span style="color:#e6db74">`//0.0.0.0:8001/?resolution=&lt;/span>&lt;span style="color:#e6db74">${&lt;/span>&lt;span style="color:#a6e22e">resolution&lt;/span>.&lt;span style="color:#a6e22e">width&lt;/span>&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">x&lt;/span>&lt;span style="color:#e6db74">${&lt;/span>&lt;span style="color:#a6e22e">resolution&lt;/span>.&lt;span style="color:#a6e22e">height&lt;/span>&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">`&lt;/span>;
 &lt;span style="color:#66d9ef">return&lt;/span> &amp;lt;&lt;span style="color:#f92672">img&lt;/span> &lt;span style="color:#a6e22e">alt&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#34;loading stream...&amp;#34;&lt;/span> &lt;span style="color:#a6e22e">src&lt;/span>&lt;span style="color:#f92672">=&lt;/span>{&lt;span style="color:#a6e22e">src&lt;/span>} {&lt;span style="color:#a6e22e">...props&lt;/span>} /&amp;gt;;
 }
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>A simple functional component in &lt;em>TypeScript&lt;/em> that, depending on the available size, chooses a stream resolution to be either &lt;code>1080p&lt;/code> or &lt;code>720p&lt;/code>; adaptive streaming in a manual fashion, presumably to safe some bandwidth and lower the computing resources on the MJPEG server. Its parent component did guarantee the aspect ratio and the handling of the &lt;code>resize&lt;/code> event accordingly.&lt;/p>
-&lt;p>But, as I just observed in the reproduction step above, even though the &lt;code>resize&lt;/code> event causes a correct re-render of the &lt;code>Stream&lt;/code>-component, the unmounted components were still receiving HTTP pushes from previously used streams. &lt;em>react&lt;/em> somehow didn&amp;rsquo;t close the stream in the unmount cycle of the component as I would expect from this implementation.&lt;/p>
-&lt;p>&amp;hellip;so, a bug in &lt;em>react&lt;/em>?&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>A simple functional component in &lt;em>TypeScript&lt;/em> that, depending on the available size, chooses a stream resolution to be either &lt;code>1080p&lt;/code> or &lt;code>720p&lt;/code>; adaptive streaming in a manual fashion, presumably to safe some bandwidth and lower the computing resources on the MJPEG server. Its parent component did guarantee the aspect ratio and a proper handling of the &lt;code>resize&lt;/code> event accordingly.&lt;/p>
+&lt;p>But, as I just observed in the reproduction step above, even though the &lt;code>resize&lt;/code> event causes a correct re-render of the &lt;code>Stream&lt;/code>-component, the unmounted components were still receiving HTTP pushes from previously used streams. &lt;em>react&lt;/em> somehow didn&amp;rsquo;t close the stream in the unmount cycle of the component, as I would expect from this implementation&amp;hellip; so, a bug in &lt;em>react&lt;/em>?&lt;/p>
 &lt;h3 id="mjpeg-server">MJPEG Server&lt;/h3>
-&lt;p>The MJPEG video stream server is implemented in &lt;em>C++&lt;/em> and for proprietary reasons I just want to outline the implemeted behavior here with a short description. Later on I&amp;rsquo;ll provide some code, so we can create a MJPEG server the FOSS way.&lt;/p>
+&lt;p>The MJPEG video stream server is implemented in &lt;em>C++&lt;/em> and for proprietary reasons I just want to outline the implemented behavior here with a short description. Later on I&amp;rsquo;ll provide some code, so we can create a MJPEG server the FOSS way.&lt;/p>
 &lt;p>Internally the streaming server gets its images by subscribing to a &lt;a href="http://wiki.ros.org/Topics">&lt;em>ROS&lt;/em> Topic&lt;/a>. It receives frames in a certain frequency, waits for a browser client to request a stream and then goes on with the encoding of a new MJPEG stream for each unique URI.&lt;/p>
-&lt;p>The browser client is in charge of some stream options via the query: &lt;em>resolution&lt;/em>, &lt;em>framerate&lt;/em>, &lt;em>quality&lt;/em> etc. &lt;code>/?resolution=1920x1080&lt;/code> and &lt;code>/?resolution=1280x720&lt;/code> will produce two distinct MJPEG video streams with different resolutions, just as we&amp;rsquo;ve seen in the &lt;em>react&lt;/em> &lt;code>Stream&lt;/code>-component above. And, like present in the server logs, the maximum number of MJPEG streams is limited to 5 streams for a single server. Each client that requests a stream with an identical URI will consume the same MJPEG stream.&lt;/p>
+&lt;p>The browser client is in charge of some stream options via the query: &lt;em>resolution&lt;/em>, &lt;em>framerate&lt;/em>, &lt;em>quality&lt;/em> etc. &lt;code>/?resolution=1920x1080&lt;/code> and &lt;code>/?resolution=1280x720&lt;/code> will produce two distinct MJPEG video streams with different resolutions, just as we&amp;rsquo;ve seen in the &lt;em>react&lt;/em> &lt;code>Stream&lt;/code>-component above. As present in the server logs, the maximum number of MJPEG streams is limited to 5 streams for a single server. Each client that requests a stream with an identical URI will consume the same MJPEG stream.&lt;/p>
 &lt;p>There are some comments in the source code mentioning:&lt;/p>
 &lt;blockquote>
 &lt;p>Every created stream will be garbage collected after there is no application consuming it anymore and some timeout emitted after its last consumption.&lt;/p>
 &lt;/blockquote>
 &lt;p>To isolate the problem (and to provide some usable example code for the readers of this post) let me create an environment as vanilla as possible&amp;hellip;&lt;/p>
 &lt;h2 id="an-isolated-environment-as-playground">An isolated environment as playground&lt;/h2>
-&lt;p>For reproducibility purposes I want to provide some simplified versions of the two servers mentioned above. I need to create one server that provides an endless MJPEG video stream via HTTP and one that serves a simple SPA in order to request this MJPEG stream via a &lt;code>src&lt;/code> attribute in an HTML &lt;code>img&lt;/code> element.&lt;/p>
+&lt;p>For reproducibility purposes I want to provide some simplified versions of the two mentioned servers. I need to create one server that provides an endless MJPEG video stream via HTTP and one that serves an simple SPA, so a request to the MJPEG stream can be done via the &lt;code>src&lt;/code> attribute on an HTML &lt;code>img&lt;/code> element.&lt;/p>
 &lt;p>&lt;strong>tl;dr&lt;/strong> you can clone the mentioned files &lt;a href="https://github.com/whilenot-dev/cool-bugs-vs-shitty-bugs-part-1">here&lt;/a>.&lt;/p>
 &lt;h3 id="a-simple-mjpeg-server">A simple MJPEG server&lt;/h3>
 &lt;p>The following packages are needed to launch the MJPEG server successfully (assuming &lt;em>Fedora&lt;/em>):&lt;/p>
@@ -80,7 +79,7 @@ The post should give the reader an intro on what it means nowadays to do fronten
 &lt;li>&lt;a href="https://gstreamer.freedesktop.org">&lt;em>gstreamer1&lt;/em>&lt;/a>&lt;/li>
 &lt;li>&lt;a href="https://gstreamer.freedesktop.org">&lt;em>gstreamer1-plugins-good&lt;/em>&lt;/a>&lt;/li>
 &lt;/ul>
-&lt;p>The way MJPEG is streamed via HTTP is with the &lt;a href="https://en.wikipedia.org/wiki/MIME#x-mixed-replace">&lt;code>multipart/x-mixed-replace&lt;/code> MIME type&lt;/a>. I will cover the &lt;em>why&lt;/em>&amp;rsquo;s and &lt;em>how&lt;/em>&amp;rsquo;s later on in a section below when I go a bit into detail of the involved specs. But for now, let me just echo an HTTP MJPEG stream to &lt;em>STDOUT&lt;/em> first.&lt;/p>
+&lt;p>The way MJPEG is streamed via HTTP is with the &lt;a href="https://en.wikipedia.org/wiki/MIME#x-mixed-replace">&lt;code>multipart/x-mixed-replace&lt;/code> MIME type&lt;/a>. I will cover the &lt;em>why&lt;/em>&amp;rsquo;s and &lt;em>how&lt;/em>&amp;rsquo;s later on when I go a bit into detail of the involved specs. But for now, let me just echo an HTTP MJPEG stream to &lt;em>STDOUT&lt;/em> first.&lt;/p>
 &lt;p>I use &lt;code>gstreamer&lt;/code>&amp;rsquo;s &lt;code>gst-launch&lt;/code> cli to create a simple MJPEG media pipeline and, like in the &lt;em>Netscape&lt;/em> example in the section below about specs, I prepend this load with some &lt;code>echo&lt;/code>ing for the initial &lt;code>multipart&lt;/code> HTTP-header:&lt;/p>
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">&lt;span style="color:#75715e"># start-stream.sh&lt;/span>
 &lt;span style="color:#75715e">#!/bin/bash&lt;/span>
@@ -98,8 +97,8 @@ gst-launch-1.0 -q &lt;span style="color:#ae81ff">\
 &lt;/span>&lt;span style="color:#ae81ff">&lt;/span> jpegenc quality&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#ae81ff">5&lt;/span> ! &lt;span style="color:#ae81ff">\
 &lt;/span>&lt;span style="color:#ae81ff">&lt;/span> multipartmux boundary&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span>&lt;span style="color:#e6db74">${&lt;/span>BOUNDARY&lt;span style="color:#e6db74">}&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span> ! &lt;span style="color:#ae81ff">\
 &lt;/span>&lt;span style="color:#ae81ff">&lt;/span> filesink append&lt;span style="color:#f92672">=&lt;/span>true location&lt;span style="color:#f92672">=&lt;/span>/dev/stdout &lt;span style="color:#75715e"># the fdsink plugin didn&amp;#39;t provide the needed `append` property to include the echoed header&lt;/span>
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>I&amp;rsquo;m picking the sweeping ball test video source of gstreamer as my infinite stream here. Executing this scripts in the terminal will for the mostly just output some gibberish (JPEG binary data), but you can see that the HTTP header are there as well.&lt;/p>
-&lt;p>Now with a proper terminal output ready I make use of &lt;code>netcat&lt;/code> (&lt;code>nc&lt;/code>) in listen mode to provide this output as an actual HTTP response from an server:&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>I&amp;rsquo;m picking the sweeping ball test video source of gstreamer as my infinite stream here. Executing this script in the terminal will seemingly just output some gibberish (JPEG binary data), but inbetween you should be able to see that the necessary HTTP headers are in there as well.&lt;/p>
+&lt;p>A proper terminal output is ready now, so let me make use of &lt;code>netcat&lt;/code> (&lt;code>nc&lt;/code>) in listen mode to provide this output as an actual HTTP response from an server:&lt;/p>
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">&lt;span style="color:#75715e"># serve.sh&lt;/span>
 &lt;span style="color:#75715e">#!/bin/bash&lt;/span>
 DIR&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#66d9ef">$(&lt;/span> dirname &lt;span style="color:#e6db74">&amp;#34;&lt;/span>&lt;span style="color:#66d9ef">$(&lt;/span> realpath &lt;span style="color:#e6db74">&amp;#34;&lt;/span>$0&lt;span style="color:#e6db74">&amp;#34;&lt;/span> &lt;span style="color:#66d9ef">)&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&lt;/span> &lt;span style="color:#66d9ef">)&lt;/span>
@@ -115,7 +114,7 @@ nc -l -k -p &lt;span style="color:#ae81ff">8001&lt;/span> -c &lt;span style="col
 &lt;p>&lt;img src="https://blog.whilenot.dev/images/cool-bugs-vs-shitty-bugs-part-1/playground_mjpeg.png" alt="playground_mjpeg.png" title="Playground of MJPEG Stream">&lt;/p>
 &lt;p>Now to the SPA&amp;hellip;&lt;/p>
 &lt;h3 id="a-simple-vanilla-spa">A simple vanilla SPA&lt;/h3>
-&lt;p>For the SPA I also want to stay vanilla and try to work without any 3rd party library involvement (eg. &lt;em>react&lt;/em>):&lt;/p>
+&lt;p>For the SPA I also want to stay vanilla and try to work without any 3rd party library (eg. &lt;em>react&lt;/em>):&lt;/p>
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-html" data-lang="html">&lt;span style="color:#75715e">&amp;lt;!-- index.html --&amp;gt;&lt;/span>
 &amp;lt;&lt;span style="color:#f92672">html&lt;/span> &lt;span style="color:#a6e22e">lang&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#34;en&amp;#34;&lt;/span>&amp;gt;
 &amp;lt;&lt;span style="color:#f92672">head&lt;/span>&amp;gt;
@@ -157,8 +156,8 @@ document.&lt;span style="color:#a6e22e">body&lt;/span>.&lt;span style="color:#a6
 }
 &lt;span style="color:#a6e22e">img&lt;/span>.&lt;span style="color:#a6e22e">remove&lt;/span>();
 }
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>Instead of removing the HTML element from the DOM with &lt;em>react&lt;/em> through a conditional &lt;code>resize&lt;/code> event, I just use a timeout of 10s. This will provide - to my surprise - a setup that is already sufficient enough to recreate the observed bug, as I will now show.&lt;/p>
-&lt;p>I can simply serve those files with the static file server of my choice:&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>Instead of removing the HTML element from the DOM through &lt;em>react&lt;/em> with an &lt;code>resize&lt;/code> event, I just use a timeout of 10s. This will provide - to my surprise - a setup that is already sufficient enough to recreate the observed bug, as I will now show.&lt;/p>
+&lt;p>I can serve those files with the static file server of my choice:&lt;/p>
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">&lt;span style="color:#75715e"># serve.sh&lt;/span>
 &lt;span style="color:#75715e">#!/bin/bash&lt;/span>
 python -m http.server &lt;span style="color:#ae81ff">8000&lt;/span>
@@ -172,30 +171,29 @@ python -m http.server &lt;span style="color:#ae81ff">8000&lt;/span>
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">$ ./serve.sh
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>&amp;hellip;and can consum the MJPEG stream with my vanilla SPA on &lt;code>0.0.0.0:8000&lt;/code>.&lt;/p>
 &lt;p>&lt;img src="https://blog.whilenot.dev/images/cool-bugs-vs-shitty-bugs-part-1/playground_spa.png" alt="playground_spa.png" title="Playground of SPA">&lt;/p>
-&lt;p>Let&amp;rsquo;s do some observations together!&lt;/p>
+&lt;p>Let&amp;rsquo;s do some observations!&lt;/p>
 &lt;h2 id="observability">Observability&lt;/h2>
 &lt;p>With the playground in place, let me observe the behavior of the loading MJPEG stream more closely.&lt;/p>
 &lt;h3 id="playing-on-the-playground">Playing on the playground&lt;/h3>
-&lt;p>The browser already gives us quite some information on the network activity, even before consultiung additional tools.&lt;/p>
-&lt;p>With a visit on &lt;code>0.0.0.0:8000&lt;/code> the browser let&amp;rsquo;s us observe the following.&lt;/p>
+&lt;p>The browser already gives me quite some information on the network activity, even before consultiung additional tools. With a visit on &lt;code>0.0.0.0:8000&lt;/code> it lets me observe the following things.&lt;/p>
 &lt;p>On &lt;em>Brave&lt;/em>:&lt;/p>
 &lt;ul>
 &lt;li>the images of the stream get properly rendered without stutter for 10s&lt;/li>
 &lt;li>the logs contain a single entry: &lt;code>images loaded: 1&lt;/code>&lt;/li>
-&lt;li>the stream keeps loading in the background after the HTML &lt;code>img&lt;/code> element has been removed from the DOM!&lt;/li>
+&lt;li>the stream keeps loading in the background after the HTML &lt;code>img&lt;/code> element has been removed from the DOM&lt;/li>
 &lt;/ul>
 &lt;p>&lt;img src="https://blog.whilenot.dev/images/cool-bugs-vs-shitty-bugs-part-1/playground.gif" alt="playground.gif" title="Playground animated">&lt;/p>
 &lt;p>On &lt;em>Firefox&lt;/em> (just for completeness):&lt;/p>
 &lt;ul>
 &lt;li>no image of the stream is shown (just an occasional single frame on my system, if I&amp;rsquo;m even lucky)&lt;/li>
 &lt;li>there are quite some log entries á la &lt;code>images loaded: x&lt;/code>, seemingly for each multipart body part&lt;/li>
-&lt;li>the stream also keeps loading in the background after the HTML &lt;code>img&lt;/code> element has been removed from the DOM and it even keeps logging entries!&lt;/li>
+&lt;li>the stream also keeps loading in the background after the HTML &lt;code>img&lt;/code> element has been removed from the DOM (and it even keeps logging entries!)&lt;/li>
 &lt;/ul>
-&lt;p>My client just puts its focus on Chromium based browsers with their product, but &lt;em>UH OH!&lt;/em> this difference in modern browser engines is worrysome. Why does the browser keep receiving data after the &lt;code>img&lt;/code> HTML element has been removed from the DOM in both cases?&lt;/p>
-&lt;p>Let us observe the established TCP sockets for the MJPEG server on OS level.&lt;/p>
+&lt;p>My client just focusses on Chromium based browsers with their product, but &lt;em>UH OH!&lt;/em> this difference in modern browser engines is worrysome. Why does the browser keep receiving data after the &lt;code>img&lt;/code> HTML element has been removed from the DOM in both cases?&lt;/p>
+&lt;p>Let me observe the established TCP sockets for the MJPEG server on OS level.&lt;/p>
 &lt;h3 id="making-established-tcp-sockets-visible">Making established TCP sockets visible&lt;/h3>
-&lt;p>After feeling enlighted and motivated by &lt;em>Brendan Gregg&lt;/em>&amp;rsquo;s books &lt;em>BPF Performance Tools: Linux System and Application Observability&lt;/em> and &lt;em>Systems Performance: Enterprise and the Cloud&lt;/em>, let me get a list of all the established TCP sockets from the browser (source) to the MJPEG server (destination).&lt;/p>
-&lt;p>With the servers running on my machine (with the scripts above) I can observe the established sockets for my destination with &lt;a href="https://www.man7.org/linux/man-pages/man8/ss.8.html">ss&lt;/a>.&lt;/p>
+&lt;p>After feeling enlighted and motivated by &lt;em>Brendan Gregg&lt;/em>&amp;rsquo;s books &lt;em>BPF Performance Tools: Linux System and Application Observability&lt;/em> and &lt;em>Systems Performance: Enterprise and the Cloud&lt;/em>, let me get a list of all the established TCP sockets, from the browser (source) to the MJPEG server (destination).&lt;/p>
+&lt;p>With both servers running on my machine (with the scripts above) I can observe the established sockets for my destination with &lt;a href="https://www.man7.org/linux/man-pages/man8/ss.8.html">ss&lt;/a>.&lt;/p>
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">$ ss -HOna4t state established &lt;span style="color:#e6db74">&amp;#39;( dst = 127.0.0.1:8001 )&amp;#39;&lt;/span>
 &lt;/code>&lt;/pre>&lt;/div>&lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-txt" data-lang="txt">0 0 127.0.0.1:59590 127.0.0.1:8001
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>To observe any changes more easily I can &lt;a href="https://www.man7.org/linux/man-pages/man1/watch.1.html">watch&lt;/a> the output of the command also continuously as frequent as every 100ms.&lt;/p>
@@ -210,14 +208,14 @@ tcp 0 0 127.0.0.1:59592 127.0.0.1:8001 ESTABLISHED
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">$ watch -n 0.1 &lt;span style="color:#e6db74">&amp;#34;ss -HOna4t state established &amp;#39;( dst = 127.0.0.1:8001 )&amp;#39; | wc -l&amp;#34;&lt;/span>
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>&amp;hellip;or with &lt;code>netstat&lt;/code> / &lt;code>awk&lt;/code>:&lt;/p>
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-bash" data-lang="bash">$ watch -n 0.1 &lt;span style="color:#e6db74">&amp;#34;netstat -4nt | awk &amp;#39;&amp;#34;&lt;/span>&lt;span style="color:#e6db74">&amp;#39;{ if ($5 == &amp;#34;127.0.0.1:8001&amp;#34; &amp;amp;&amp;amp; $6 == &amp;#34;ESTABLISHED&amp;#34;) print $0 }&amp;#39;&lt;/span>&lt;span style="color:#e6db74">&amp;#34;&amp;#39; | wc -l&amp;#34;&lt;/span>
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>With one of those scripts running in the terminal I have the visible inidicator ready on OS level. I can clearly see that the established TCP socket doesn&amp;rsquo;t get closed after the HTML &lt;code>img&lt;/code> element has been removed from the DOM.&lt;/p>
-&lt;p>We knew that one before by deriving it from the network tab in the &lt;em>DevTools&lt;/em>, but making it scriptable could give us some idea on how to test this behavior in an browser-independent automated way.&lt;/p>
-&lt;p>Let me have a look at the specs. Maybe this behavior is according to the specs or they could give me another hint at least&amp;hellip;&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>With one of those observability one-lines running in the terminal I now have the visible indicator on OS level. I can clearly see that the established TCP socket doesn&amp;rsquo;t get closed after the HTML &lt;code>img&lt;/code> element has been removed from the DOM.&lt;/p>
+&lt;p>We knew that one before by deriving that info from the network tab in the &lt;em>DevTools&lt;/em>, but making it scriptable in the terminal could give us some idea on how to test this behavior in an browser-independent, automated way.&lt;/p>
+&lt;p>Let me have a look at the specs. Maybe this behavior is expected or maybe they could give me another hint&amp;hellip;&lt;/p>
 &lt;h2 id="gathering-some-insights-on-some-involved-specs">Gathering some insights on some involved specs&lt;/h2>
 &lt;p>Let&amp;rsquo;s step from lowest to highest level: TCP sockets, MJPEG streaming via HTTP pushes, and the DOM elements.&lt;/p>
 &lt;h3 id="tcp--rfc-793httpswwwrfc-editororgrfcrfc793">TCP / &lt;a href="https://www.rfc-editor.org/rfc/rfc793">RFC 793&lt;/a>&lt;/h3>
 &lt;p>Did you ever had a look at the TCP RFC?&lt;/p>
-&lt;p>What interests me in this case is the section about the different &lt;a href="https://www.rfc-editor.org/rfc/rfc793#section-3.2">states&lt;/a> a TCP socket can have:&lt;/p>
+&lt;p>What interests me in this case is the section about the different &lt;a href="https://www.rfc-editor.org/rfc/rfc793#section-3.2">states&lt;/a> that a TCP socket can have:&lt;/p>
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-txt" data-lang="txt"> A connection progresses through a series of states during its
 lifetime. The states are: LISTEN, SYN-SENT, SYN-RECEIVED,
 ESTABLISHED, FIN-WAIT-1, FIN-WAIT-2, CLOSE-WAIT, CLOSING, LAST-ACK,
@@ -309,10 +307,9 @@ V x V snd FIN V
 TCP Connection State Diagram
 Figure 6.
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>Data can flow on an &lt;em>ESTABLISHED&lt;/em> state, that&amp;rsquo;s why I added an additional filter to the observability one-liners.&lt;/p>
-&lt;p>So HTML &lt;code>img&lt;/code> element, with the TCP remote set as &lt;code>src&lt;/code> attribute, stays an &lt;em>ESTABLISHED&lt;/em> TCP socket, even after the HTML element has been removed from the DOM. But why doesn&amp;rsquo;t the browsers close the socket to the MJPEG server?&lt;/p>
+&lt;p>So an HTML &lt;code>img&lt;/code> element, with the TCP remote set in the &lt;code>src&lt;/code> attribute, creates and keeps an &lt;em>ESTABLISHED&lt;/em> TCP socket, even after the HTML element has been removed from the DOM. But why doesn&amp;rsquo;t the browsers close the socket to the MJPEG server?&lt;/p>
 &lt;h3 id="video-streaming-via-motion-jpeg">Video streaming via Motion JPEG&lt;/h3>
-&lt;p>As I already showed in the playground script above, streaming MJPEG is rather simple.
-I could find that information spread out on multiple sources.&lt;/p>
+&lt;p>Streaming MJPEG is rather simple, as I already showed in the playground script above. I could find that information spread out on multiple sources.&lt;/p>
 &lt;p>&lt;a href="https://en.wikipedia.org/wiki/Motion_JPEG#Video_streaming">Wikipedia&lt;/a> has a nice overview:&lt;/p>
 &lt;blockquote>
 &lt;p>In response to a GET request for a MJPEG file or stream, the server streams the sequence of JPEG frames over HTTP. A special mime-type content type multipart/x-mixed-replace;boundary=&amp;lt;boundary-name&amp;gt; informs the client to expect several parts (frames) as an answer delimited by &amp;lt;boundary-name&amp;gt;. This boundary name is expressly disclosed within the MIME-type declaration itself. The TCP connection is not closed as long as the client wants to receive new frames and the server wants to provide new frames. [&amp;hellip;]&lt;/p>
@@ -362,7 +359,8 @@ ps -el
 echo &lt;span style="color:#e6db74">&amp;#34;---ThisRandomString---&amp;#34;&lt;/span>
 sleep &lt;span style="color:#ae81ff">5&lt;/span>
 &lt;span style="color:#66d9ef">done&lt;/span>
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>Following is an excerpt from the HTML specs by the WHATWG on &lt;a href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#read-multipart-x-mixed-replace">multipart/x-mixed-replace&lt;/a>:&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>So much to the historic &lt;em>Netscape&lt;/em> post.&lt;/p>
+&lt;p>The following is an excerpt from the HTML specs by the WHATWG on &lt;a href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#read-multipart-x-mixed-replace">multipart/x-mixed-replace&lt;/a>:&lt;/p>
 &lt;blockquote>
 &lt;p>For the purposes of algorithms processing these body parts as if they were complete stand-alone resources, the user agent must act as if there were no more bytes for those resources whenever the boundary following the body part is reached.&lt;/p>
 &lt;p>Thus, load events (and for that matter unload events) do fire for each body part loaded.&lt;/p>
@@ -394,14 +392,13 @@ Follow the steps given in the multipart/x-mixed-replace section providing naviga
 [...]
 &lt;/code>&lt;/pre>
 &lt;/blockquote>
-&lt;p>Oki, so much for MJPEG streaming. The server is in charge of the framerate and both (server and client) can termination the connection. Let&amp;rsquo;s have a look at the spec for the HTML &lt;code>img&lt;/code> element.&lt;/p>
+&lt;p>Oki, so much for MJPEG streaming. The server is in charge of the framerate and both (server and client) can terminate the connection. Let&amp;rsquo;s have a look at the spec for the HTML &lt;code>img&lt;/code> element.&lt;/p>
 &lt;h3 id="htmlimageelement">HTMLImageElement&lt;/h3>
 &lt;p>Obvious sources are the &lt;a href="https://html.spec.whatwg.org/#the-img-element">HTML spec by the WHATWG&lt;/a> and the &lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement">elaborating notes on MDN&lt;/a>.&lt;/p>
 &lt;p>I guessed what could be of interest for my bug is the &lt;a href="https://html.spec.whatwg.org/multipage/embedded-content.html#dom-img-complete-dev">&lt;code>complete&lt;/code> attribute&lt;/a>. &lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement#htmlimageelement.complete">This bit on MDN&lt;/a> in particular catched by attention:&lt;/p>
 &lt;blockquote>
 &lt;p>Returns a boolean value that is true if the browser has finished fetching the image, whether successful or not. That means this value is also true if the image has no src value indicating an image to load.&lt;/p>
 &lt;/blockquote>
-&lt;p>The part about &lt;em>&amp;quot;[&amp;hellip;] is also true if the image has no src value [&amp;hellip;]&amp;quot;&lt;/em> lead me to the assumption that if I remove the &lt;code>src&lt;/code> attribute from the HTML element, then the browser might consider the load of the image as being &lt;strong>complete&lt;/strong>d and will properly close the established TCP socket.&lt;/p>
 &lt;p>&lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/complete#value">Here&lt;/a> is an even a more detailed flow:&lt;/p>
 &lt;blockquote>
 &lt;p>The image is considered completely loaded if any of the following are true:&lt;/p>
@@ -413,6 +410,7 @@ Follow the steps given in the multipart/x-mixed-replace section providing naviga
 &lt;li>The image is &amp;ldquo;broken;&amp;rdquo; that is, the image failed to load due to an error or because image loading is disabled.&lt;/li>
 &lt;/ul>
 &lt;/blockquote>
+&lt;p>The part about &lt;em>&amp;quot;[&amp;hellip;] is also true if the image has no src value [&amp;hellip;]&amp;quot;&lt;/em> lead me to the assumption that if I remove the &lt;code>src&lt;/code> attribute from the HTML element, then the browser might consider the load of the image as being &lt;strong>complete&lt;/strong>d and will properly close the established TCP socket.&lt;/p>
 &lt;p>So let me just try to remove the &lt;code>src&lt;/code> attribute in the unmount cycle of the component!&lt;/p>
 &lt;h2 id="i-hope-well-learn-something-new-here">I hope we&amp;rsquo;ll learn something new here&amp;hellip;&lt;/h2>
 &lt;p>So right before the call to &lt;code>img.remove()&lt;/code> in the vanilla SPA, I include a call to remove the &lt;code>src&lt;/code> attribute.&lt;/p>
@@ -432,7 +430,7 @@ Follow the steps given in the multipart/x-mixed-replace section providing naviga
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-sh" data-lang="sh">$ watch -n 0.1 &lt;span style="color:#e6db74">&amp;#34;ss -HOna4t state established &amp;#39;( dst = 127.0.0.1:8001 )&amp;#39;&amp;#34;&lt;/span>
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>&amp;hellip;I can see that the established TCP socket gets properly closed.&lt;/p>
 &lt;p>Wow! What was missing is a surprising client-side &lt;code>img.removeAttribute(&amp;quot;src&amp;quot;)&lt;/code> right before the call to &lt;code>img.remove()&lt;/code>, otherwise the socket will stay open and continue to receive pushes from the MJPEG server.&lt;/p>
-&lt;p>So in the &lt;em>react&lt;/em> SPA of my client I archieve the same behavior by using an effect hook. That should remove the attribute in the unmount cycle:&lt;/p>
+&lt;p>So in the &lt;em>react&lt;/em> SPA of my client I archieve the same behavior by using an effect hook. That one should remove the attribute in the unmount cycle:&lt;/p>
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-typescript" data-lang="typescript">&lt;span style="color:#66d9ef">import&lt;/span> &lt;span style="color:#f92672">*&lt;/span> &lt;span style="color:#66d9ef">as&lt;/span> &lt;span style="color:#a6e22e">React&lt;/span> &lt;span style="color:#66d9ef">from&lt;/span> &lt;span style="color:#e6db74">&amp;#34;react&amp;#34;&lt;/span>;
 &lt;span style="color:#66d9ef">export&lt;/span> &lt;span style="color:#66d9ef">interface&lt;/span> &lt;span style="color:#a6e22e">StreamProps&lt;/span> {
 &lt;span style="color:#75715e">// ...same as above
@@ -466,11 +464,11 @@ Follow the steps given in the multipart/x-mixed-replace section providing naviga
 &lt;/span>&lt;span style="color:#75715e"> */&lt;/span>
 &lt;span style="color:#66d9ef">return&lt;/span> &amp;lt;&lt;span style="color:#f92672">img&lt;/span> &lt;span style="color:#a6e22e">alt&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#34;loading stream...&amp;#34;&lt;/span> &lt;span style="color:#a6e22e">ref&lt;/span>&lt;span style="color:#f92672">=&lt;/span>{&lt;span style="color:#a6e22e">imgRef&lt;/span>} {&lt;span style="color:#a6e22e">...props&lt;/span>} /&amp;gt;;
 }
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>&amp;hellip;and just like that I only stream the data for the video that is also present in the DOM and the MJPEG server can properly garbage collect its unused streams!&lt;/p>
-&lt;p>Going even further, now that the MJPEG server can garbage collect all the unused streams, I included some additional conditions to handle even smaller resolutions than &lt;code>720p&lt;/code> and safe some more resources.&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&amp;hellip;and just like that I only stream the data for the video that is also present in the DOM. Finally the MJPEG server can properly garbage collect its unused streams!&lt;/p>
+&lt;p>Going further, I included some additional conditions to handle even smaller resolutions than &lt;code>720p&lt;/code> to safe even some more resources.&lt;/p>
 &lt;h2 id="conclusion">Conclusion&lt;/h2>
-&lt;p>In this post I reproduced the bug properly, elaborated the process on how to isolate the problem and got to write some useful scripts that provide observability on established TCP sockets. I think it&amp;rsquo;s nice to see that modern frontend engineering involves quite some knowledge about a working system, the complexity of browsers and sometimes a thorough read through specs and historical references. What&amp;rsquo;s missing might be a look into the Chromium source code.&lt;/p>
-&lt;p>There seems to be an interesting quirk with an &lt;code>Image&lt;/code> being loaded via &lt;code>multipart&lt;/code>-HTTP-pushes in an responsive implementation. In the end I just assume that an &lt;code>Image&lt;/code> doesn&amp;rsquo;t get garbage collected by the browser engine, as it is expected to &lt;code>complete&lt;/code> the loading process first. Maybe this clashes with &lt;code>multipart&lt;/code>-HTTP-pushes, especially after the &lt;code>load&lt;/code> event got emitted - and that emit happens, in contrast to spec, only once (on &lt;em>Brave&lt;/em>!). Regarding responsive images, I did also try out the &lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/srcset">&lt;code>srcset&lt;/code> attribute&lt;/a> for a responsive behavior without any scripting, but that one had even more quirks, as the image with the higher quality is alwas preferred once loaded. I might cover this in a followup post. I wonder if there are other HTML elements that suffer from such surprises like the &lt;code>HTMLImageElement&lt;/code>?&lt;/p>
+&lt;p>In this post I reproduced the bug properly, elaborated the process on how to isolate the problem and got to write some useful scripts that provide observability of established TCP sockets. I think it&amp;rsquo;s nice to see that modern frontend engineering involves quite some knowledge about a working system, the complexity of browsers and sometimes a thorough read through specs and historical references. What&amp;rsquo;s missing might be a look into the Chromium source code.&lt;/p>
+&lt;p>There seems to be an interesting quirk with an &lt;code>Image&lt;/code> being loaded via &lt;code>multipart&lt;/code>-HTTP-pushes in an responsive implementation. In the end I just assume that an &lt;code>Image&lt;/code> doesn&amp;rsquo;t get garbage collected by the browser engine, as it is expected to &lt;code>complete&lt;/code> the loading of the resource first. Maybe this behavior clashes with &lt;code>multipart&lt;/code>-HTTP-pushes, especially together with the &lt;code>load&lt;/code> event (and that emit happens only once on &lt;em>Brave&lt;/em>, in contrast to the spec!). Regarding responsive images, I did also try out the &lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/srcset">&lt;code>srcset&lt;/code> attribute&lt;/a> for multi-source fetching without any scripting, but that one had even more quirks, as the image with the higher quality was, once loaded, always the preferred one. I might cover this in a followup post. I wonder if there are other HTML elements that suffer from such surprises like the &lt;code>HTMLImageElement&lt;/code>?&lt;/p>
 &lt;p>&amp;hellip;and, what was so cool about the bug?&lt;/p>
 &lt;p>A cool bug is so complex that it becomes hard to avoid during development, even after making every decision reasonable well. Such a bug is deeply hidden in some spec, maybe even just an implicit behavior and can&amp;rsquo;t be easily looked up in any documentation of a library. I could have easily created such a bug myself and solving such a bug makes me feel like I could grow as a software engineer simply by fixing it. Unfortunately, cool bugs are rare!&lt;/p>
 &lt;p>Here&amp;rsquo;s a quick list of all the awesome tools that were touched in this journey:&lt;/p>
