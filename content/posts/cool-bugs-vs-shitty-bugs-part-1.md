@@ -1,15 +1,8 @@
 +++
 title = "Cool Bugs VS Shitty Bugs, Part 1: Cool Bugs"
 date = "2022-04-10T14:29:10+02:00"
-author = "Florian Gutzwiller"
-authorTwitter = "" #do not include @
-cover = ""
 tags = ["frontend", "react", "video streaming", "mjpeg", "observability"]
-keywords = ["", ""]
 description = "Steaming video via Motion JPEG and counting established TCP sockets"
-showFullContent = false
-readingTime = false
-hideComments = false
 +++
 
 # Steaming video via Motion JPEG and counting established TCP sockets
