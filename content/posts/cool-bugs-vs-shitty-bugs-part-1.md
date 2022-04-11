@@ -303,7 +303,7 @@ On _Brave_:
 - the logs contain a single entry: `images loaded: 1`
 - the stream keeps loading in the background after the HTML `img` element has been removed from the DOM
 
-![playground.gif](/images/cool-bugs-vs-shitty-bugs-part-1/playground.gif "Playground animated")
+![playground_bug.gif](/images/cool-bugs-vs-shitty-bugs-part-1/playground_bug.gif "Bug in playground")
 
 On _Firefox_ (just for completeness):
 
@@ -665,6 +665,8 @@ Now, when I observe the established sockets with the little hacky watcher again:
 ```sh
 $ watch -n 0.1 "ss -HOna4t state established '( dst = 127.0.0.1:8001 )'"
 ```
+
+![playground_fix.gif](/images/cool-bugs-vs-shitty-bugs-part-1/playground_fix.gif "Fix in playground")
 
 ...I can see that the established TCP socket gets properly closed.
 
