@@ -182,7 +182,7 @@ python -m http.server &lt;span style="color:#ae81ff">8000&lt;/span>
 &lt;li>the logs contain a single entry: &lt;code>images loaded: 1&lt;/code>&lt;/li>
 &lt;li>the stream keeps loading in the background after the HTML &lt;code>img&lt;/code> element has been removed from the DOM&lt;/li>
 &lt;/ul>
-&lt;p>&lt;img src="https://blog.whilenot.dev/images/cool-bugs-vs-shitty-bugs-part-1/playground.gif" alt="playground.gif" title="Playground animated">&lt;/p>
+&lt;p>&lt;img src="https://blog.whilenot.dev/images/cool-bugs-vs-shitty-bugs-part-1/playground_bug.gif" alt="playground_bug.gif" title="Bug in playground">&lt;/p>
 &lt;p>On &lt;em>Firefox&lt;/em> (just for completeness):&lt;/p>
 &lt;ul>
 &lt;li>no image of the stream is shown (just an occasional single frame on my system, if I&amp;rsquo;m even lucky)&lt;/li>
@@ -428,7 +428,8 @@ Follow the steps given in the multipart/x-mixed-replace section providing naviga
 }
 &lt;/code>&lt;/pre>&lt;/div>&lt;p>Now, when I observe the established sockets with the little hacky watcher again:&lt;/p>
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-sh" data-lang="sh">$ watch -n 0.1 &lt;span style="color:#e6db74">&amp;#34;ss -HOna4t state established &amp;#39;( dst = 127.0.0.1:8001 )&amp;#39;&amp;#34;&lt;/span>
-&lt;/code>&lt;/pre>&lt;/div>&lt;p>&amp;hellip;I can see that the established TCP socket gets properly closed.&lt;/p>
+&lt;/code>&lt;/pre>&lt;/div>&lt;p>&lt;img src="https://blog.whilenot.dev/images/cool-bugs-vs-shitty-bugs-part-1/playground_fix.gif" alt="playground_fix.gif" title="Fix in playground">&lt;/p>
+&lt;p>&amp;hellip;I can see that the established TCP socket gets properly closed.&lt;/p>
 &lt;p>Wow! What was missing is a surprising client-side &lt;code>img.removeAttribute(&amp;quot;src&amp;quot;)&lt;/code> right before the call to &lt;code>img.remove()&lt;/code>, otherwise the socket will stay open and continue to receive pushes from the MJPEG server.&lt;/p>
 &lt;p>So in the &lt;em>react&lt;/em> SPA of my client I archieve the same behavior by using an effect hook. That one should remove the attribute in the unmount cycle:&lt;/p>
 &lt;div class="highlight">&lt;pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">&lt;code class="language-typescript" data-lang="typescript">&lt;span style="color:#66d9ef">import&lt;/span> &lt;span style="color:#f92672">*&lt;/span> &lt;span style="color:#66d9ef">as&lt;/span> &lt;span style="color:#a6e22e">React&lt;/span> &lt;span style="color:#66d9ef">from&lt;/span> &lt;span style="color:#e6db74">&amp;#34;react&amp;#34;&lt;/span>;
