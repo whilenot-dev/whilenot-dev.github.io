@@ -46,7 +46,7 @@ With the description being elaborate enough, I started up the two affected serve
 ...and assumed that the video server got exhausted. I could imediately confirm my assumption as its logs contained entries like the following:
 
 ```txt
-[mjpeg_server] WARN: to many open streams (6/5)
+[mjpeg_server] WARN: too many open streams (6/5)
 ```
 
 By resizing the browser window with the _DevTools_ on the sidebar and by having the network tab open (with the filter set to `Img`, assuming _Brave_), I can observe that there are still data pushed from the MJPEG server; even though the stream got presumably "lost". Even more interesting, **all URIs that were ever used to request a MJPEG stream since session start were still receiving server pushes** with streaming data from the server.
