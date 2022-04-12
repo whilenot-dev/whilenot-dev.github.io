@@ -9,13 +9,13 @@ description = "Steaming video via Motion JPEG and counting established TCP socke
 
 Recently I had to debug a problem in an SPA regarding Motion JPEG streams for one of my clients. I found this journey so interesting that I wanted to share it as my first blog post.
 
-The post should give the reader an introduction on what it means to do frontend engineering nowadays. What follows is a post that touches on _MJPEG streams_, _HTTP pushes_, _TCP sockets_ and _their observability_. What I assumed to be a bug in either the clients application code or even the _react_ library, just turned out to surprise me and I think it could surprise others as well.
+The post should give the reader an introduction on what it means to do frontend engineering nowadays. What follows is a post that touches on _MJPEG streams_, _HTTP pushes_, _TCP sockets_ and _their observability_. What I assumed to be a bug in either the sent application or even the _React_ library, just turned out to surprise me and I think it could surprise others as well.
 
 So let's step through it together and let me start by outlining the system of my client.
 
 ## Describing the system
 
-The system of my client contains, among other services, a statically served SPA (written with [_react_](https://reactjs.org/)) and a video stream server (written with [_ROS_](https://www.ros.org/) in _C++_/_Python_).
+The system of my client contains, among other services, a statically served SPA (written with [_React_](https://reactjs.org/)) and a video stream server (written with [_ROS_](https://www.ros.org/) in _C++_/_Python_).
 
 The stream server offers its data to the SPA in the [Motion JPEG (_MJPEG_)](https://en.wikipedia.org/wiki/Motion_JPEG) format. MJPEG is an rather archaic approach, but still does its job well enough and hides all video interaction from the UI.
 
@@ -25,7 +25,7 @@ In the shipped product both servers run on different hosts, but for this post le
 
 The users are able to access the SPA via a Chromium-based browser and can then see the video stream in the center of the page. A responsive behavior is implemented as well, but apparently the system didn't work as expected...
 
-## A bug in Todo
+## A bug in TODO
 
 At the beginning of the week I found a new bug-ticket and its description contained something like the following:
 
@@ -33,7 +33,7 @@ At the beginning of the week I found a new bug-ticket and its description contai
 
 With the description being elaborate enough, I started up the two affected servers:
 
-- the one serving the _react_ SPA
+- the one serving the _React_ SPA
 - and the one MJPEG stream server
 
 ...and assumed that the video server got exhausted. I could imediately confirm my assumption as its logs contained entries like the following:
@@ -54,7 +54,7 @@ I just want to outline the concept here before I go on to create an isolated pla
 
 ### React SPA
 
-The _react_ component for the stream viewer looked something like the following:
+The _React_ component for the stream viewer looked something like the following:
 
 ```typescript
 // stream.tsx
@@ -93,9 +93,9 @@ export function Stream(props: StreamProps) {
 }
 ```
 
-A simple functional component in _TypeScript_ that, depending on the available size, chooses a stream resolution to be either `1080p` or `720p`; adaptive streaming in a manual fashion, presumably to safe some bandwidth and lower the computing resources on the MJPEG server. Its parent component did guarantee the aspect ratio and a proper handling of the `resize` event.
+A simple stateless functional component in _TypeScript_ that, depending on the available size, chooses a stream resolution to be either `1080p` or `720p`; adaptive streaming in a manual fashion, presumably to save some bandwidth and lower the computing resources on the MJPEG server. Its parent component did guarantee the aspect ratio and a proper handling of the `resize` event.
 
-But, as I just observed in the reproduction step above, even though the `resize` event causes a correct re-render of the `Stream`-component, the unmounted components were still receiving HTTP pushes from previously used streams. _react_ somehow didn't close the stream in the unmount cycle of the component, as I would expect from this implementation... so, a bug in _react_?
+But, as I observed in the reproduction step above, even though the `resize` event causes a correct re-render of the `Stream`-component, the unmounted components were still receiving HTTP pushes from previously used streams. The stream just didn't get released in the unmount cycle of the component, as I honestly would expect from this implementation and the declarative promise of _React_... so, a bug in _React_?
 
 ### MJPEG Server
 
@@ -103,7 +103,7 @@ The MJPEG video stream server is implemented in _C++_ and for proprietary reason
 
 Internally the streaming server gets its images by subscribing to a [_ROS_ Topic](http://wiki.ros.org/Topics). It receives frames in a certain frequency, waits for a browser client to request a stream and then goes on with the encoding of a new MJPEG stream for each unique URI.
 
-The browser client is in charge of some stream options via the query: _resolution_, _framerate_, _quality_ etc. `/?resolution=1920x1080` and `/?resolution=1280x720` will produce two distinct MJPEG video streams with different resolutions, just as we've seen in the _react_ `Stream`-component above. As present in the server logs, the maximum number of MJPEG streams is limited to 5 streams for a single server. Each client that requests a stream with an identical URI will consume the same MJPEG stream.
+The browser client is in charge of some stream options via the query: _resolution_, _framerate_, _quality_ etc. `/?resolution=1920x1080` and `/?resolution=1280x720` will produce two distinct MJPEG video streams with different resolutions, just as we've seen in the _React_ `Stream`-component above. As present in the server logs, the maximum number of MJPEG streams is limited to 5 streams for a single server. Each client that requests a stream with an identical URI will consume the same MJPEG stream.
 
 There are some comments in the source code mentioning:
 
@@ -190,7 +190,7 @@ Now to the SPA...
 
 ### A simple vanilla SPA
 
-For the SPA I also want to stay vanilla and try to work without any 3rd party library (eg. _react_):
+For the SPA I also want to stay vanilla and try to work without any 3rd party library (eg. _React_):
 
 ```html
 <!-- index.html -->
@@ -247,7 +247,7 @@ function removeStream() {
 }
 ```
 
-Instead of removing the HTML element from the DOM through _react_ with an `resize` event, I just use a timeout of 10s. This will provide - to my surprise - a setup that is already sufficient enough to recreate the observed bug, as I will now show.
+Instead of removing the HTML element from the DOM through _React_ with an `resize` event, I just use a timeout of 10s. This will provide - to my surprise - a setup that is already sufficient enough to recreate the observed bug, as I will now show.
 
 I can serve those files with the static file server of my choice:
 
@@ -487,7 +487,7 @@ What interests me in this case is the section about the different [states](https
 
 Data can flow on an _ESTABLISHED_ state, that's why I added an additional filter to the observability one-liners.
 
-So an HTML `img` element, with the TCP remote set in the `src` attribute, creates and keeps an _ESTABLISHED_ TCP socket, even after the HTML element has been removed from the DOM. But why doesn't the browsers close the socket to the MJPEG server?
+So an HTML `img` element, with the TCP remote set in the `src` attribute, creates and keeps an _ESTABLISHED_ TCP socket, even after the HTML element has been removed from the DOM. But why doesn't the browser close the socket to the MJPEG server?
 
 ### Video streaming via Motion JPEG
 
@@ -563,7 +563,7 @@ The following is an excerpt from the HTML specs by the WHATWG on [multipart/x-mi
 >
 > Thus, load events (and for that matter unload events) do fire for each body part loaded.
 
-Can you notice the bit about the load events: "_load events [...] do fire for each body part loaded._"? It seems that each received MJPEG frame should emit the `load` event... _Brave_ only emits the one for the first frame, but _Firefox_ seemingly does!
+Can you notice the bit about the load events: "_load events [...] do fire for each body part loaded._"? It seems that each received MJPEG frame should emit the `load` event... _Brave_ only emits the one for the first frame, but _Firefox_ seemingly does emit on all frames!
 
 Here are the relevant bits of the "[process a navigate response](https://html.spec.whatwg.org/multipage/browsing-the-web.html#process-a-navigate-response)"-section from the HTML spec:
 
@@ -632,7 +632,7 @@ I guessed what could be of interest for my bug is the [`complete` attribute](htt
 
 The part about _"[...] is also true if the image has no src value [...]"_ lead me to the assumption that if I remove the `src` attribute from the HTML element, then the browser might consider the load of the image as being **complete**d and will properly close the established TCP socket.
 
-So let me just try to remove the `src` attribute in the unmount cycle of the component!
+So let me just try to remove the `src` attribute before I remove the element from the DOM!
 
 ## I hope we'll learn something new here...
 
@@ -667,7 +667,7 @@ $ watch -n 0.1 "ss -HOna4t state established '( dst = 127.0.0.1:8001 )'"
 
 Wow! What was missing is a surprising client-side `img.removeAttribute("src")` right before the call to `img.remove()`, otherwise the socket will stay open and continue to receive pushes from the MJPEG server.
 
-So in the _react_ SPA of my client I archieve the same behavior by using an effect hook. That one should remove the attribute in the unmount cycle:
+So in the _React_ SPA of my client I archieve the same behavior by using an effect hook. That one should remove the attribute in the unmount cycle:
 
 ```typescript
 import * as React from "react";
@@ -712,19 +712,19 @@ export function Stream(props: StreamProps) {
 
 ...and just like that I only stream the data for the video that is also present in the DOM. Finally the MJPEG server can properly garbage collect its unused streams!
 
-Going further, I included some additional conditions to handle even smaller resolutions than `720p` to safe even some more resources.
+Going further, I included some additional conditions to handle even smaller resolutions than `720p` to save even some more resources.
 
 ## Conclusion
 
 In this post I reproduced the bug properly, elaborated the process on how to isolate the problem and got to write some useful scripts that provide observability of established TCP sockets. I think it's nice to see that modern frontend engineering involves quite some knowledge about a working system, the complexity of browsers and sometimes a thorough read through specs and historical references. What's missing might be a look into the Chromium source code.
 
-There seems to be an interesting quirk with an `Image` being loaded via `multipart`-HTTP-pushes in an responsive implementation. In the end I just assume that an `Image` doesn't get garbage collected by the browser engine after the removal from the DOM, as it's expected to `complete` the loading of the resource first. Maybe this behavior clashes with `multipart`-HTTP-pushes, especially together with the behavior of the `load` event as that one doesn't even seem to be according to spec.
+There seems to be an interesting quirk with an `Image` being loaded via `multipart`-HTTP-pushes in an responsive implementation. In the end I just assume that an `Image` doesn't get garbage collected by the browser engine after the removal from the DOM, as it's expected to `complete` the loading of the resource first. Maybe this behavior clashes with `multipart`-HTTP-pushes, especially together with the behavior of the `load` event as that one doesn't even seem to be according to spec. The declarative promise of _React_ just distorted my perspective regarding source fetching here, but I also think it shouldn't make an effort to provide a declarative solution here.
 
 Regarding responsive images, I did also try out the [`srcset` attribute](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/srcset) for multi-source fetching without any scripting, but that one had even more quirks, since the image with the higher quality was (once loaded) always the preferred one. I might cover this in a followup post and wonder if there are other HTML elements that suffer from such surprises like the `HTMLImageElement`?
 
 ...and, what was so cool about the bug?
 
-A cool bug is so complex that it becomes hard to avoid during development, even after making every decision reasonable well. Such a bug is deeply hidden in some spec, maybe even just an implicit behavior and can't be easily looked up in any documentation of a library. I could have easily created such a bug myself and solving such a bug makes me feel like I could grow as a software engineer simply by fixing it. Unfortunately, cool bugs are rare!
+A cool bug is so complex that it becomes hard to avoid during development, even after making every decision reasonably well. Such a bug is deeply hidden in some spec, maybe even just an implicit behavior and can't be easily looked up in any documentation of a library. I could have easily created such a bug myself and solving it makes me feel like I could grow as a software engineer simply by fixing it. Unfortunately, cool bugs are rare!
 
 Here's a quick list of all the awesome tools that were touched in this journey:
 
@@ -733,3 +733,5 @@ Here's a quick list of all the awesome tools that were touched in this journey:
 - `ss` (or `netstat` / `awk` for MacOS)
 
 Thank you for having a look and stepping through it with me!
+
+And thank you, Mihail Georgescu, for proof reading this blog post!
