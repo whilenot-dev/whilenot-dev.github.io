@@ -2,10 +2,10 @@
 title = "Cool Bugs VS Shitty Bugs, Part 1: Cool Bugs"
 date = "2022-04-10T14:29:10+02:00"
 tags = ["frontend", "react", "video streaming", "mjpeg", "observability"]
-description = "Steaming video via Motion JPEG, counting established TCP sockets and a declarative promise with a catch"
+description = "Steaming video via Motion JPEG and counting established TCP sockets - a declarative promise with a catch"
 +++
 
-# Steaming video via Motion JPEG, counting established TCP sockets and a declarative promise with a catch
+# Steaming video via Motion JPEG and counting established TCP sockets - a declarative promise with a catch
 
 Recently I had to debug a problem in an SPA regarding Motion JPEG streams for one of my clients. I found this journey so interesting that I wanted to share it as my first blog post.
 
