@@ -321,7 +321,7 @@ $ ss -HOna4t state established '( dst = 127.0.0.1:8001 )'
 ```
 
 ```txt
-0                   0                                  127.0.0.1:59590                             127.0.0.1:8001
+0      0       127.0.0.1:59590 127.0.0.1:8001
 ```
 
 To observe any changes more easily I can [watch](https://www.man7.org/linux/man-pages/man1/watch.1.html) the output of the command also continuously as frequent as every 100ms.
@@ -331,9 +331,9 @@ $ watch -n 0.1 "ss -HOna4t state established '( dst = 127.0.0.1:8001 )'"
 ```
 
 ```txt
-Every 0.1s: ss -HOna4t state established '( dst = 127.0.0.1:8001 )'   dell-precision-5560.localdomain: Fri Apr 1 21:28:12 2022
+Every 0.1s: ss -HOna4t ...  dell-precision-5560.localdomain: Fri Apr 1 21:28:12 2022
 
-0      0      127.0.0.1:59590 127.0.0.1:8001
+0      0       127.0.0.1:59590 127.0.0.1:8001
 ```
 
 If you don't have `ss` available on your system (maybe on MacOS?), [netstat](https://man7.org/linux/man-pages/man8/netstat.8.html) and [awk](https://man7.org/linux/man-pages/man1/awk.1p.html) provide similar capabilities.
@@ -343,7 +343,7 @@ $ watch -n 0.1 "netstat -4nt | awk '"'{ if ($5 == "127.0.0.1:8001" && $6 == "EST
 ```
 
 ```txt
-Every 0.1s: netstat -4nt | awk '{ if ($5 == "127.0.0.1:8001" && $...  dell-precision-5560.localdomain: Fri Apr 1 21:29:28 2022
+Every 0.1s: netstat -4n...  dell-precision-5560.localdomain: Fri Apr 1 21:29:28 2022
 
 tcp        0	  0 127.0.0.1:59592         127.0.0.1:8001          ESTABLISHED
 ```
