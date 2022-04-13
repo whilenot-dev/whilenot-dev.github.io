@@ -712,7 +712,7 @@ export function Stream(props: StreamProps) {
 
 ...and just like that I only stream the data for the video that is also present in the DOM. Finally the MJPEG server can properly garbage collect its unused streams!
 
-Going further, I included some additional conditions to handle even smaller resolutions than `720p` to save even some more resources.
+Going further, I included some additional conditions to handle even smaller resolutions than `720p` to save even more resources.
 
 ## Conclusion
 
