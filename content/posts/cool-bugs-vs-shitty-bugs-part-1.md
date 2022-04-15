@@ -491,13 +491,11 @@ So an HTML `img` element, with the TCP remote set in the `src` attribute, create
 
 ### Video streaming via Motion JPEG
 
-Streaming MJPEG is rather simple, as I already showed in the playground script above. I could find that information spread out on multiple sources.
+Streaming MJPEG is rather simple, as I already showed in the playground script above. I could find that information spread out on multiple sources. (I think the following specs are interesting, but feel free to skim those if you're not into specs that much.)
 
 [Wikipedia](https://en.wikipedia.org/wiki/Motion_JPEG#Video_streaming) has a nice overview:
 
 > In response to a GET request for a MJPEG file or stream, the server streams the sequence of JPEG frames over HTTP. A special mime-type content type multipart/x-mixed-replace;boundary=\<boundary-name\> informs the client to expect several parts (frames) as an answer delimited by \<boundary-name\>. This boundary name is expressly disclosed within the MIME-type declaration itself. The TCP connection is not closed as long as the client wants to receive new frames and the server wants to provide new frames. [...]
->
-> Native web browser support includes: Safari, Google Chrome, Microsoft Edge[5] and Firefox.[6]
 
 The specific MIME type in the content type of the HTTP response (that enables the server to push a stream to the client) originates from [this post on Server Pushes](https://web.archive.org/web/19981203153836/http://fishcam.netscape.com/assist/net_sites/pushpull.html) from _Netscape_ back in the day:
 
@@ -521,7 +519,7 @@ Data for the second and last object.
 --ThisRandomString--
 ```
 
-> The key to the use of this technique is that the server does not push the whole "multipart/x-mixed-replace" message down all at once but rather sends down each successive data block whenever it sees fit. The HTTP connection stays open all the time, and the server pushes down new data blocks as rapidly or as infrequently as it wants, and in between data blocks the browser simply sits and waits for more data in the current window. The user can even go off and do other things in other windows; when the server has more data to send, it just pushes another data block down the pipe, and the appropriate window updates itself.
+> [...]
 >
 > So here's exactly what happens:
 >
@@ -620,7 +618,7 @@ I guessed what could be of interest for my bug is the [`complete` attribute](htt
 
 > Returns a boolean value that is true if the browser has finished fetching the image, whether successful or not. That means this value is also true if the image has no src value indicating an image to load.
 
-[Here](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/complete#value) is an even a more detailed flow:
+[Here](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/complete#value) is an even more detail about the flow:
 
 > The image is considered completely loaded if any of the following are true:
 >
@@ -630,7 +628,7 @@ I guessed what could be of interest for my bug is the [`complete` attribute](htt
 > - The image element has previously determined that the image is fully available and ready for use.
 > - The image is "broken;" that is, the image failed to load due to an error or because image loading is disabled.
 
-The part about _"[...] is also true if the image has no src value [...]"_ lead me to the assumption that if I remove the `src` attribute from the HTML element, then the browser might consider the load of the image as being **complete**d and will properly close the established TCP socket.
+The part about _"[...] is also true if the image has no src value [...]"_ and _"The image is considered completely loaded if [...] Neither the src nor the srcset attribute is specified."_ lead me to the assumption that if I remove the `src` attribute from the HTML element, then the browser might consider the load of the image as being **complete**d and will properly close the established TCP socket.
 
 So let me just try to remove the `src` attribute before I remove the element from the DOM!
 
@@ -665,7 +663,7 @@ $ watch -n 0.1 "ss -HOna4t state established '( dst = 127.0.0.1:8001 )'"
 
 ![playground_fix.gif](/images/cool-bugs-vs-shitty-bugs-part-1/playground_fix.gif "Fix in playground")
 
-Wow! What was missing is a surprising client-side `img.removeAttribute("src")` right before the call to `img.remove()`, otherwise the socket will stay open and continue to receive pushes from the MJPEG server.
+Wow! What was missing is a surprising client-side `img.removeAttribute("src")` right before the call to `img.remove()`, otherwise the socket will stay open and continue to receive pushes from the MJPEG server. (As a friend later pointed out I was not alone with [my assumption](https://stackoverflow.com/questions/5278304/how-to-cancel-an-image-from-loading).)
 
 So in the _React_ SPA of my client I archieve the same behavior by using an effect hook. That one should remove the attribute in the unmount cycle:
 
