@@ -663,7 +663,7 @@ $ watch -n 0.1 "ss -HOna4t state established '( dst = 127.0.0.1:8001 )'"
 
 ![playground_fix.gif](/images/cool-bugs-vs-shitty-bugs-part-1/playground_fix.gif "Fix in playground")
 
-Wow! What was missing is a surprising client-side `img.removeAttribute("src")` right before the call to `img.remove()`, otherwise the socket will stay open and continue to receive pushes from the MJPEG server. (As a friend later pointed out I was not alone with [my assumption](https://stackoverflow.com/questions/5278304/how-to-cancel-an-image-from-loading).)
+Wow! What was missing is a surprising client-side `img.removeAttribute("src")` right before the call to `img.remove()`, otherwise the socket will stay open and continue to receive pushes from the MJPEG server. (As a friend later pointed out I was [not alone](https://stackoverflow.com/questions/5278304/how-to-cancel-an-image-from-loading) with my assumption.)
 
 So in the _React_ SPA of my client I archieve the same behavior by using an effect hook. That one should remove the attribute in the unmount cycle:
 
