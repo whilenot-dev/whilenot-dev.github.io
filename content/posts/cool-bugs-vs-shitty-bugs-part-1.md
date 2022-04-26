@@ -7,7 +7,7 @@ description = "Steaming video via Motion JPEG and counting established TCP socke
 
 # Steaming video via Motion JPEG and counting established TCP sockets - a declarative promise with a catch
 
-Recently I had to debug a problem in an SPA regarding Motion JPEG streams for one of my clients. I found this journey so interesting that I wanted to share it as my first blog post.
+Recently I had to debug a problem in an Single Page Application (SPA) regarding Motion JPEG streams for one of my clients. I found this journey so interesting that I wanted to share it as my first blog post.
 
 The post should give the reader an introduction on what it means to do frontend engineering nowadays. What follows is a post that touches on _MJPEG streams_, _HTTP pushes_, _TCP sockets_ and _their observability_. What I assumed to be a bug in either the sent application or even the _React_ library, just turned out to surprise me and I think it could surprise others as well.
 
@@ -29,7 +29,7 @@ The users are able to access the SPA via a Chromium-based browser and can then s
 
 At the beginning of the week I found a new bug-ticket and its description contained something like the following:
 
-> By changing the size of the visible video stream in the UI more than 5 times times, eg. by resizing the browser window, the video stream gets lost and the image just shows a blank background.
+> By changing the size of the visible video stream in the UI more than 5 times, eg. by resizing the browser window, the video stream gets lost and the image just shows a blank background.
 
 With the description being elaborate enough, I started up the two affected servers:
 
@@ -290,7 +290,7 @@ With the playground in place, let me observe the behavior of the loading MJPEG s
 
 ### Playing on the playground
 
-The browser already gives me quite some information on the network activity, even before consultiung additional tools. With a visit on `0.0.0.0:8000` it lets me observe the following things.
+The browser already gives me quite some information on the network activity, even before consulting additional tools. With a visit on `0.0.0.0:8000` it lets me observe the following things.
 
 On _Brave_:
 
@@ -312,7 +312,7 @@ Let me observe the established TCP sockets for the MJPEG server on OS level.
 
 ### Making established TCP sockets visible
 
-After feeling enlighted and motivated by _Brendan Gregg_'s books _BPF Performance Tools: Linux System and Application Observability_ and _Systems Performance: Enterprise and the Cloud_, let me get a list of all the established TCP sockets, from the browser (source) to the MJPEG server (destination).
+After feeling enlightened and motivated by _Brendan Gregg_'s books _BPF Performance Tools: Linux System and Application Observability_ and _Systems Performance: Enterprise and the Cloud_, let me get a list of all the established TCP sockets, from the browser (source) to the MJPEG server (destination).
 
 With both servers running on my machine (with the scripts above) I can observe the established sockets for my destination with [ss](https://www.man7.org/linux/man-pages/man8/ss.8.html).
 
@@ -614,7 +614,7 @@ Oki, so much for MJPEG streaming. The server is in charge of the framerate and b
 
 Obvious sources are the [HTML spec by the WHATWG](https://html.spec.whatwg.org/#the-img-element) and the [elaborating notes on MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement).
 
-I guessed what could be of interest for my bug is the [`complete` attribute](https://html.spec.whatwg.org/multipage/embedded-content.html#dom-img-complete-dev). [This bit on MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement#htmlimageelement.complete) in particular catched by attention:
+I guessed what could be of interest for my bug is the [`complete` attribute](https://html.spec.whatwg.org/multipage/embedded-content.html#dom-img-complete-dev). [This bit on MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement#htmlimageelement.complete) in particular caught by attention:
 
 > Returns a boolean value that is true if the browser has finished fetching the image, whether successful or not. That means this value is also true if the image has no src value indicating an image to load.
 
@@ -732,4 +732,4 @@ Here's a quick list of all the awesome tools that were touched in this journey:
 
 Thank you for having a look and stepping through it with me!
 
-And thank you, Mihail Georgescu, for proof reading this blog post!
+And thank you, Mihail Georgescu & Dominik Manser, for feedback and proof reading this blog post!
