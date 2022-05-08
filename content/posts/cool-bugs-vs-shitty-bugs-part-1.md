@@ -618,7 +618,7 @@ I guessed what could be of interest for my bug is the [`complete` attribute](htt
 
 > Returns a boolean value that is true if the browser has finished fetching the image, whether successful or not. That means this value is also true if the image has no src value indicating an image to load.
 
-[Here](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/complete#value) is an even more detail about the flow:
+[Here](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/complete#value) is even more detail about the use of the `complete`-attribute:
 
 > The image is considered completely loaded if any of the following are true:
 >
@@ -716,7 +716,7 @@ Going further, I included some additional conditions to handle even smaller reso
 
 In this post I reproduced the bug properly, elaborated the process on how to isolate the problem and got to write some useful scripts that provide observability of established TCP sockets. I think it's nice to see that modern frontend engineering involves quite some knowledge about a working system, the complexity of browsers and sometimes a thorough read through specs and historical references. What's missing might be a look into the Chromium source code.
 
-There seems to be an interesting quirk with an `Image` being loaded via `multipart`-HTTP-pushes in an responsive implementation. In the end I just assume that an `Image` doesn't get garbage collected by the browser engine after the removal from the DOM, as it's expected to `complete` the loading of the resource first. Maybe this behavior clashes with `multipart`-HTTP-pushes, especially together with the behavior of the `load` event as that one doesn't even seem to be according to spec. The declarative promise of _React_ just distorted my perspective regarding source fetching here, but I also think it shouldn't make an effort to provide a declarative solution here.
+There seems to be an interesting quirk with an `Image` being loaded via `multipart`-HTTP-pushes in an responsive implementation. In the end I just assume that an `Image` doesn't get garbage collected by the browser engine after the removal from the DOM, as it's expected to `complete` the loading of the resource first. Maybe this behavior clashes with `multipart`-HTTP-pushes, especially together with the behavior of the `load` event as that one doesn't even seem to be according to spec. The declarative promise of _React_ just distorted my perspective regarding source fetching here, but I also think it shouldn't make an effort to provide a declarative solution.
 
 Regarding responsive images, I did also try out the [`srcset` attribute](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/srcset) for multi-source fetching without any scripting, but that one had even more quirks, since the image with the higher quality was (once loaded) always the preferred one. I might cover this in a followup post and wonder if there are other HTML elements that suffer from such surprises like the `HTMLImageElement`?
 
