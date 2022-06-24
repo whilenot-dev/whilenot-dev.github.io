@@ -614,7 +614,7 @@ Oki, so much for MJPEG streaming. The server is in charge of the framerate and b
 
 Obvious sources are the [HTML spec by the WHATWG](https://html.spec.whatwg.org/#the-img-element) and the [elaborating notes on MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement).
 
-I guessed what could be of interest for my bug is the [`complete` attribute](https://html.spec.whatwg.org/multipage/embedded-content.html#dom-img-complete-dev). [This bit on MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement#htmlimageelement.complete) in particular caught by attention:
+I guessed what could be of interest for my bug is the [`complete` attribute](https://html.spec.whatwg.org/multipage/embedded-content.html#dom-img-complete-dev). [This bit on MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement#htmlimageelement.complete) in particular caught my attention:
 
 > Returns a boolean value that is true if the browser has finished fetching the image, whether successful or not. That means this value is also true if the image has no src value indicating an image to load.
 
