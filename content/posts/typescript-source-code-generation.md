@@ -7,7 +7,7 @@ description = "Generate valid TypeScript source code programmatically with a met
 
 # Generate valid _TypeScript_ source code programmatically with a metaprogramming technique
 
-It's about time for another blog post... been a while! While I still owe it to myself to write the 2nd part of the [previous blog post](https://blog.whilenot.dev/posts/cool-bugs-vs-shitty-bugs-part-1/) (does anybody have tips for shitty bugs?), I thought it would be time to write about a different topic - [Metaprogramming](https://en.wikipedia.org/wiki/Automatic_programming#Source-code_generation).
+It's about time for another blog post... been a while! While I still owe it to myself to write the 2nd part of the [previous blog post](https://blog.whilenot.dev/posts/cool-bugs-vs-shitty-bugs-part-1/) (does anybody have tips for shitty bugs?), I thought it would be time to write about a different topic - [Metaprogramming](https://en.wikipedia.org/wiki/Automatic_programming#Source-code_generation) as programming technique.
 
 Sometimes writing source code can get a bit repetitive. Anytime I encounter such a feeling I reflect on my life and how I never wanted to do any assembly-line work, as I did in my childhood during the summer holidays, ever again. We all work on software for different use cases, but one thing we all probably have in common is the desire to automate repetitive tasks.
 
@@ -15,7 +15,7 @@ In this post I want to show you how to create _TypeScript_ files programmaticall
 
 ## When to generate (source) code
 
-I understand source code generation here as the automated output from processing a [contract](<(https://en.wikipedia.org/wiki/Design_by_contract)>) for your program. An "outer world" of a program, and its "contract" to describe its interface, can include the design of a database, any GraphQL- or REST-API, or basically any kind of data structure that is related to a certain schema definition (even unofficial ones, eg. like the used by [Directus CMS](https://docs.directus.io/packages/@directus/sdk/schema/interfaces/CoreSchema.html)).
+I understand source code generation here as the automated output from processing a [contract](<(https://en.wikipedia.org/wiki/Design_by_contract)>) for your program. An "outer world" of a program, and its "contract" to describe its interface, can include the design of a database, any GraphQL- or REST-API, or basically any kind of data that are according to a certain schema definition (even unofficial ones, eg. like the one used by [Directus CMS](https://docs.directus.io/packages/@directus/sdk/schema/interfaces/CoreSchema.html)).
 
 I noticed in my software designs that the communication from the "core" part of the program to the "outer world" can include a lot of repetition. In cases where the abstraction into functions doesn't really cut it, I might long for a higher level of abstraction than that provided by the programming language. Generated code is especially valuable for those modules of a program that communicate with that "outer world". Any changes in the "outer world" can then be - in the best case - just one command away from getting in sync with your program again.
 
@@ -56,8 +56,6 @@ For the sake of this post I'm making use of an ill defined JSON as data input:
 ]
 ```
 
-(you can probably already imagine better data with a well-defined schema as input)
-
 ...and want to generate the following _TypeScript_ source code file by executing a _JavaScript_ script:
 
 ```typescript
@@ -80,7 +78,7 @@ interface SomeInterfaceC {
 export type SomeInterface = SomeInterfaceA | SomeInterfaceB | SomeInterfaceC;
 ```
 
-The focus here isn't to show how complex generated code can be, it's rather about showing the available methods to reach such an output. Methods in this post include source code generation via:
+You can probably already imagine better data with a well-defined schema as input. The focus here isn't to show how complex generated code can be, it's rather about showing the available methods to reach such an output. Methods in this post include source code generation via:
 
 1. [Template literals](#1-template-literals)
 1. [A template engine](#2-a-template-engine)
@@ -121,9 +119,9 @@ function main() {
 }
 ```
 
-As you can probably already see, this method is very error prone and not very pleasant to maintain. I'm basically concatenating strings one after the other and need to rely on good naming conventions to make sense of the generated source code parts - one for the `interface` definition, one for the `union` definition. Quotes, identation, formatting etc. become manual work and affect readability quite a lot.
+As you can probably already see, this method is very error prone and not very pleasant to maintain. I'm basically concatenating strings one after the other and need to rely on good naming conventions to make sense of the generated source code parts; one for the `interface` definition, one for the `union` definition. Quotes, identation, formatting etc. become manual work and affect readability quite a lot.
 
-I can already predict the future struggles to maintain something like this. This method has the advantage to avoid additional dependencies, but it's probably for the best to use this method only for the most simple repetitions (this example here being one of them) and treat such scripts as throw-away code.
+I can already predict the future struggles to maintain something like this. This method has the advantage to avoid additional dependencies, but it's probably for the best to use it only for the most simple repetitions (this example here being one of them) and treat such scripts as throw-away code.
 
 To improve readability we might need a better templating system...
 
@@ -162,7 +160,7 @@ This method is pretty self-exlanatory: I pick a template engine of my choice, ad
 
 Depending on the complexity of the generated output, a template engine can provide enough built-in functionalty to iterate over code parts and in general provides good readability for any future maintainance. There are template engines available for all major programming languages: `Python` has [`Jinja`](https://jinja.palletsprojects.com/en/3.1.x/), `Node.js` has [`handlebars`](https://handlebarsjs.com/), `Go` has [`pongo2`](https://www.schlachter.tech/solutions/pongo2-template-engine/), among others.
 
-Did you notice how the template engine needed to define its own syntax for basic programming constructs (eg. for-loops)? Sometimes those built-in's are not enough to express the complexity of the generated source code. While a template engine might provide functionality to register custom helpers (eg. [like handlebars](https://handlebarsjs.com/guide/expressions.html#helpers)), you might feel that the fight for readability seems like a lost cause in the long run.
+Did you notice how the template engine needed to define its own syntax for basic programming constructs (eg. for-loops)? Sometimes those built-in's are not enough to express the complexity of the generated source code. While a template engine might provide functionality to register custom helpers (eg. [handlebars](https://handlebarsjs.com/guide/expressions.html#helpers)), you might feel that the fight for readability seems like a lost cause in the long run.
 
 I personally prefer to avoid any unnecessary dependencies, but if a template engine takes already part in your dependency list, I'd say it's a good extension to the first method above. In more complex cases you might better want to make use of the scripting language's capabilities...
 
@@ -228,40 +226,35 @@ import data from "../data/input.json" assert { type: "json" };
 main();
 
 function main() {
-  const statements = [
-    ...data.map(({ name, type }) =>
-      ts.factory.createInterfaceDeclaration(
-        undefined,
-        `SomeInterface${name}`,
-        undefined,
-        undefined,
-        [
-          ts.factory.createPropertySignature(
-            undefined,
-            "discriminator",
-            undefined,
-            ts.factory.createStringLiteral(name)
-          ),
-          ts.factory.createPropertySignature(
-            undefined,
-            "type",
-            undefined,
-            ts.factory.createIdentifier(type)
-          ),
-        ]
-      )
-    ),
-    ts.factory.createTypeAliasDeclaration(
-      [ts.factory.createToken(ts.SyntaxKind.ExportKeyword)],
-      "SomeInterface",
+  const interfaces = data.map(({ name, type }) =>
+    ts.factory.createInterfaceDeclaration(
       undefined,
-      ts.factory.createUnionTypeNode(
-        data.map((val) =>
-          ts.factory.createIdentifier(`SomeInterface${val.name}`)
-        )
-      )
-    ),
-  ]
+      `SomeInterface${name}`,
+      undefined,
+      undefined,
+      [
+        ts.factory.createPropertySignature(
+          undefined,
+          "discriminator",
+          undefined,
+          ts.factory.createStringLiteral(name)
+        ),
+        ts.factory.createPropertySignature(
+          undefined,
+          "type",
+          undefined,
+          ts.factory.createIdentifier(type)
+        ),
+      ]
+    )
+  );
+  const union = ts.factory.createTypeAliasDeclaration(
+    [ts.factory.createToken(ts.SyntaxKind.ExportKeyword)],
+    "SomeInterface",
+    undefined,
+    ts.factory.createUnionTypeNode(interfaces.map((val) => val.name))
+  );
+  const statements = [...interfaces, union]
     .flatMap((val) => [ts.factory.createIdentifier("\n"), val])
     .slice(1);
 
