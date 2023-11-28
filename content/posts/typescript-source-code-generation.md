@@ -168,6 +168,8 @@ I personally prefer to avoid any unnecessary dependencies, but if a template eng
 
 ![meme_level_3.jpg](/images/template-metaprogramming-with-typescript/meme_level_3.jpg "Level 3")
 
+I'm using the package [`code-block-writer`](https://www.npmjs.com/package/code-block-writer) as a writer library here...
+
 ```javascript
 import CodeBlockWriter from "code-block-writer";
 
