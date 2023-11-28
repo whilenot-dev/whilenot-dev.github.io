@@ -300,7 +300,7 @@ VCSs and peer reviews aren't well suited for compressed/minified output or binar
 - automated tests of generated output
 - a notification system to track the inputs lifecycle
 
-I'd personally favor to keep things simple, decrease maintainance and increase hackability.
+I'd personally favor to keep things simple, decrease maintenance and increase hackability.
 
 ## Conclusion
 
