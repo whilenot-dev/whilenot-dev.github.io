@@ -311,3 +311,5 @@ Metaprogramming with source code generation lets you work closely with the basic
 We covered code generation via [template literals](#1-template-literals), [a template engine](#2-a-template-engine), [a writer library](#3-a-writer-library), and even [the _TypeScript_ compiler API](#4-the-_typescript_-compiler-api). With all the hype around LLMs it might even be worthwhile to add a method of code generation via generative AI... but that's something for later, maybe.
 
 Thank you for having a look and stepping through it with me!
+
+And thank you, Mihail Georgescu, for feedback and proof reading this blog post!
