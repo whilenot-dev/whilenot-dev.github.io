@@ -158,7 +158,7 @@ export type SomeInterface = {{#data}}{{#if @first}}{{else}} | {{/if}}SomeInterfa
 
 This method is pretty self-exlanatory: I pick a template engine of my choice, add it to the dependencies, compile a template, and fill in the values for the template variables.
 
-Depending on the complexity of the generated output, a template engine can provide enough built-in functionalty to iterate over code parts and in general provides good readability for any future maintainance. There are template engines available for all major programming languages: `Python` has [`Jinja`](https://jinja.palletsprojects.com/en/3.1.x/), `Node.js` has [`handlebars`](https://handlebarsjs.com/), `Go` has [`pongo2`](https://www.schlachter.tech/solutions/pongo2-template-engine/), among others.
+Depending on the complexity of the generated output, a template engine can provide enough built-in functionalty to iterate over code parts and in general provides good readability for any future maintenance. There are template engines available for all major programming languages: `Python` has [`Jinja`](https://jinja.palletsprojects.com/en/3.1.x/), `Node.js` has [`handlebars`](https://handlebarsjs.com/), `Go` has [`pongo2`](https://www.schlachter.tech/solutions/pongo2-template-engine/), among others.
 
 Did you notice how the template engine needed to define its own syntax for basic programming constructs (eg. for-loops)? Sometimes those built-in's are not enough to express the complexity of the generated source code. While a template engine might provide functionality to register custom helpers (eg. [handlebars](https://handlebarsjs.com/guide/expressions.html#helpers)), you might feel that the fight for readability seems like a lost cause in the long run.
 
