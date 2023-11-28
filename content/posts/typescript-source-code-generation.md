@@ -15,7 +15,7 @@ In this post I want to show you how to create _TypeScript_ files programmaticall
 
 ## When to generate (source) code
 
-I understand source code generation here as the automated output from processing a [contract](<(https://en.wikipedia.org/wiki/Design_by_contract)>) for your program. An "outer world" of a program, and its "contract" to describe its interface, can include the design of a database, any GraphQL- or REST-API, or basically any kind of data that are according to a certain schema definition (even unofficial ones, eg. like the one used by [Directus CMS](https://docs.directus.io/packages/@directus/sdk/schema/interfaces/CoreSchema.html)).
+I understand source code generation here as the automated output from processing a [contract](https://en.wikipedia.org/wiki/Design_by_contract) for your program. An "outer world" of a program, and its "contract" to describe its interface, can include the design of a database, any GraphQL- or REST-API, or basically any kind of data that are according to a certain schema definition (even unofficial ones, eg. like the one used by [Directus CMS](https://docs.directus.io/packages/@directus/sdk/schema/interfaces/CoreSchema.html)).
 
 I noticed in my software designs that the communication from the "core" part of the program to the "outer world" can include a lot of repetition. In cases where the abstraction into functions doesn't really cut it, I might long for a higher level of abstraction than that provided by the programming language. Generated code is especially valuable for those modules of a program that communicate with that "outer world". Any changes in the "outer world" can then be - in the best case - just one command away from getting in sync with your program again.
 
