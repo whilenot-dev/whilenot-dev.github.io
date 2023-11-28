@@ -35,7 +35,7 @@ In this post I want to keep it straight forward and show the generation of valid
 
 ## Source code generation methods
 
-You can find everything mentioned here in the accompanied [GitHub repository](https://github.com/whilenot-dev/template-metaprogramming-with-typescript).
+You can find everything mentioned here in the accompanied [GitHub repository](https://github.com/whilenot-dev/typescript-source-code-generation).
 
 For the sake of this post I'm making use of an ill defined JSON as data input:
 
