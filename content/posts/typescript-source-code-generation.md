@@ -279,7 +279,7 @@ Granted, this one's overkill for our use case here. But there are times when som
 
 Making use of the `typescript` package and its compiler API is a complex-looking but valuable addition to the methods above. There's a good chance you have `typescript` already installed as dependency, as you might want to type-check the generated source code.
 
-While the [documentation](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API) for the compiler API seems kinda sparse, it's quite straightforward to just type out parts of the wanted output and then head over to the [_AST Explorer_](https://astexplorer.net/) to inspect the resulting AST. Select the `typescript` parser from the dropdown in the navigation bar and you'll be able to scan through the AST tree. You can see that names in the _AST Explorer_'s tree-nodes closely resemble the method names of the compiler API:
+While the [documentation](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API) for the compiler API seems kinda sparse, it's quite straightforward to just type out parts of the wanted output and then head over to the [_AST Explorer_](https://astexplorer.net/#/gist/77c0157430f5c4e8f6422b7739a5d875/latest) to inspect the resulting AST. Select the `typescript` parser from the dropdown in the navigation bar and you'll be able to scan through the AST tree. You can see that names in the _AST Explorer_'s tree-nodes closely resemble the method names of the compiler API:
 
 ![astexplorer.gif](/images/template-metaprogramming-with-typescript/astexplorer.gif "AST Explorer")
 
