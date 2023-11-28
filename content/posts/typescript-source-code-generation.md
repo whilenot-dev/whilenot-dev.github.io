@@ -30,11 +30,11 @@ I usually check for existing tools or language parsers whenever work on a projec
 
 ![meme_automation.jpg](/images/template-metaprogramming-with-typescript/meme_automation.jpg "Automate all the things")
 
-In this post I want to keep it straight forward and show the generation of valid _TypeScript_ source code from a simple JSON file. So let me show you some methods to generate _TypeScript_ source code...
+In this post I want to keep it straightforward and show the generation of valid _TypeScript_ source code from a simple JSON file. So let me show you some methods to generate _TypeScript_ source code...
 
 ## Source code generation methods
 
-You can find everything mentioned here in the accompanied [GitHub repository](https://github.com/whilenot-dev/typescript-source-code-generation).
+You can find everything mentioned here in the accompanying [GitHub repository](https://github.com/whilenot-dev/typescript-source-code-generation).
 
 For the sake of this post I'm making use of an ill defined JSON as data input:
 
@@ -279,7 +279,7 @@ Granted, this one's overkill for our use case here. But there are times when som
 
 Making use of the `typescript` package and its compiler API is a complex-looking but valuable addition to the methods above. There's a good chance you have `typescript` already installed as dependency, as you might want to type-check the generated source code.
 
-While the [documentation](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API) for the compiler API seems kinda sparse, it's quite straight forward to just type out parts of the wanted output and then head over to the [_AST Explorer_](https://astexplorer.net/) to inspect the resulting AST. Select the `typescript` parser from the dropdown in the navigation bar and you'll be able to scan through the AST tree. You can see that names in the _AST Explorer_'s tree-nodes closely resemble the method names of the compiler API:
+While the [documentation](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API) for the compiler API seems kinda sparse, it's quite straightforward to just type out parts of the wanted output and then head over to the [_AST Explorer_](https://astexplorer.net/) to inspect the resulting AST. Select the `typescript` parser from the dropdown in the navigation bar and you'll be able to scan through the AST tree. You can see that names in the _AST Explorer_'s tree-nodes closely resemble the method names of the compiler API:
 
 ![astexplorer.gif](/images/template-metaprogramming-with-typescript/astexplorer.gif "AST Explorer")
 
