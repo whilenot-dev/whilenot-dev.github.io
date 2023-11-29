@@ -1,7 +1,7 @@
 +++
 title = "TypeScript source code generation"
 date = "2023-11-14T14:33:56+01:00"
-tags = ["typescript", "metaprogramming", "code generation", "compiler api"]
+tags = ["metaprogramming", "code generation", "typescript compiler api"]
 description = "Examples of different methods to generate valid TypeScript source code via metaprogramming"
 +++
 
@@ -12,6 +12,8 @@ It's about time for another blog post... been a while! While I still owe it to m
 Sometimes writing source code can get a bit repetitive. Anytime I encounter such a feeling I reflect on my life and how I never wanted to do any assembly-line work, as I did in my childhood during the summer holidays, ever again. We all work on software for different use cases, but one thing we all probably have in common is the desire to automate repetitive tasks.
 
 In this post I want to show you how to create _TypeScript_ files programmatically via _JavaScript_ scripts. Yes, you read that correctly - I'm using _JavaScript_ scripts to generate valid _TypeScript_ files, which in turn should each transpile to valid _JavaScript_ again. I'll show some methods I got to know (and use) for _TypeScript_ source code generation and want to elaborate a bit on their tradeoffs. I will also briefly mention my concept about generated code and `git`, whether or not to track generated code by a [VCS](https://en.wikipedia.org/wiki/Version_control).
+
+The methods shown here should apply also to other programming languages and I'll make references when I see fit.
 
 ## When to generate (source) code
 
@@ -206,7 +208,7 @@ function main() {
 
 The programming constructs of a template engine might not be enough for your use case. In that case you want to make use of the scripting language to its full extend.
 
-This is another good addition to the methods above. A writer library provides you with an API that sits between the line-level of the source code file and some conditional and scoping constructs, similar to nodes in an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree), called `.block` here. A writer library doesn't necessarily understand the language that's about to be generated here, but it has some interesting building blocks to improve readability and programmability.
+This is another good addition to the methods above. A writer library provides you with an API that sits between the line-level of the source code file and some conditional and scoping constructs, similar to nodes in an [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree), called `.block` here. A writer library doesn't necessarily understand the language that's about to be generated here, but it has some interesting building blocks to improve readability and programmability. `Go` seems to have a more advanced writer library with the [`jennifer`](https://github.com/dave/jennifer) package.
 
 A con on my list here is the additional dependency solely for the sake of code generation.
 
@@ -282,6 +284,8 @@ Making use of the `typescript` package and its compiler API is a complex-looking
 While the [documentation](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API) for the compiler API seems kinda sparse, it's quite straightforward to just type out parts of the wanted output and then head over to the [_AST Explorer_](https://astexplorer.net/#/gist/77c0157430f5c4e8f6422b7739a5d875/latest) to inspect the resulting AST. Select the `typescript` parser from the dropdown in the navigation bar and you'll be able to scan through the AST tree. You can see that names in the _AST Explorer_'s tree-nodes closely resemble the method names of the compiler API:
 
 ![astexplorer.gif](/images/template-metaprogramming-with-typescript/astexplorer.gif "AST Explorer")
+
+Generating source code by producing an AST also takes place in `Python` via the [ast](https://docs.python.org/3/library/ast.html) standard library, although I can't comment on using it for complex cases.
 
 The compiler API was the last method for this blog post.
 
