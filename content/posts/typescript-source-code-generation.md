@@ -2,10 +2,10 @@
 title = "TypeScript source code generation"
 date = "2023-11-14T14:33:56+01:00"
 tags = ["typescript", "metaprogramming", "code generation", "compiler api"]
-description = "Generate valid TypeScript source code programmatically with a metaprogramming technique"
+description = "Examples of different methods to generate valid TypeScript source code via metaprogramming"
 +++
 
-# Generate valid _TypeScript_ source code programmatically with a metaprogramming technique
+# Examples of different methods to generate valid _TypeScript_ source code via metaprogramming
 
 It's about time for another blog post... been a while! While I still owe it to myself to write the 2nd part of the [previous blog post](https://blog.whilenot.dev/posts/cool-bugs-vs-shitty-bugs-part-1/) (does anybody have tips for shitty bugs?), I thought it would be time to write about a different topic - [Metaprogramming](https://en.wikipedia.org/wiki/Automatic_programming#Source-code_generation) as programming technique.
 
