@@ -24,7 +24,7 @@ Concepts aside, before working on a new generator script I would always look for
 - [quicktype](https://app.quicktype.io/)
 - [openapi-generator](https://github.com/OpenAPITools/openapi-generator)
 - [prisma](https://www.prisma.io/docs/concepts/components/prisma-schema/generators#community-generators)
-- ...[and many more](https://github.com/topics/generator)
+- ...and [many](https://github.com/topics/code-generator) [many](https://github.com/topics/code-generation) [more](https://github.com/topics/generator)
 
 I usually check for existing tools or language parsers whenever work on a project becomes a bit boring. In the best case, the schema's specification is well-defined, public, and versioned. It can be a nice exercise to provide a new generator for another kind of output.
 
